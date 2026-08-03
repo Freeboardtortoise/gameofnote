@@ -1,0 +1,54 @@
+name: Build and Host TIC-80 Game
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-2.0-0 libgl1-mesa-glx
+
+      - name: Download TIC-80 Pro CLI
+        run: |
+          wget https://github.com
+          tar -xvf tic80-linux.tar.gz
+          chmod +x tic80
+
+      - name: Compile Cartridge to HTML
+        run: |
+          mkdir dist
+          ./tic80 --cli --cmd "load sandbox_game.tic & export html distalone=1 & exit"
+          mv dist/game.html dist/index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
