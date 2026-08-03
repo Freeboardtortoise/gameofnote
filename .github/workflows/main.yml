@@ -48,7 +48,7 @@ jobs:
         run: |
           mkdir -p dist
           # Run tic80 globally wrapped in xvfb
-          xvfb-run --auto-servernum tic80 --cli --cmd "load game.tic & export html distalone=1 & exit"
+          xvfb-run --auto-servernum tic80 --cli --cmd "load sandbox_game.tic & export html distalone=1 & exit"
           
           # Move compiled output into place for deployment
           mv dist/game.html dist/index.html
