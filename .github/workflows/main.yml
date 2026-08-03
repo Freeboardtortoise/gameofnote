@@ -35,24 +35,20 @@ jobs:
             xvfb \
             curl
 
-      - name: Download TIC-80
+      - name: Download and Install TIC-80
         run: |
-          # Automatically fetch the latest linux release from nesbox/TIC-80 repository
-          RELEASE_URL=$(curl -s https://api.github.com/repos/nesbox/TIC-80/releases/latest | grep "browser_download_url.*linux.tar.gz" | cut -d '"' -f 4)
-          curl -L -o tic80.tar.gz "$RELEASE_URL"
-          tar -xvf tic80.tar.gz
+          # Fetch the latest .deb release package from GitHub API
+          RELEASE_URL=$(curl -s https://api.github.com/repos/nesbox/TIC-80/releases/latest | grep "browser_download_url.*linux.deb" | cut -d '"' -f 4)
           
-          # Ensure executable permissions are granted wherever extracted
-          find . -name "tic80" -type f -exec chmod +x {} \;
-          
-          # Move binary to local directory root if embedded in subfolders
-          find . -name "tic80" -type f -exec mv {} ./tic80 \;
+          # Download and install via dpkg
+          curl -L -o tic80.deb "$RELEASE_URL"
+          sudo dpkg -i tic80.deb || sudo apt-get install -f -y
 
       - name: Compile Cartridge to HTML
         run: |
           mkdir -p dist
-          # Run wrapped in xvfb for virtual display rendering
-          xvfb-run --auto-servernum ./tic80 --cli --cmd "load sandbox_game.tic & export html distalone=1 & exit"
+          # Run tic80 globally wrapped in xvfb
+          xvfb-run --auto-servernum tic80 --cli --cmd "load game.tic & export html distalone=1 & exit"
           
           # Move compiled output into place for deployment
           mv dist/game.html dist/index.html
