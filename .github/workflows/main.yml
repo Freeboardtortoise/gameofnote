@@ -48,7 +48,7 @@ jobs:
         run: |
           mkdir -p dist
           # Run export command
-          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & export html standalone=1 & exit" < /dev/null
+          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export html standalone=1 & exit" < /dev/null
           
           # Unzip the exported web package into the dist folder
           unzip standalone.zip -d dist
