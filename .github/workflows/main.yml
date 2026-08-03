@@ -27,18 +27,34 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsdl2-2.0-0 libgl1-mesa-glx
+          sudo apt-get install -y \
+            libsdl2-2.0-0 \
+            libgl1 \
+            libglx-mesa0 \
+            libgl1-mesa-dri \
+            xvfb \
+            curl
 
-      - name: Download TIC-80 Pro CLI
+      - name: Download TIC-80
         run: |
-          wget https://github.com
-          tar -xvf tic80-linux.tar.gz
-          chmod +x tic80
+          # Automatically fetch the latest linux release from nesbox/TIC-80 repository
+          RELEASE_URL=$(curl -s https://api.github.com/repos/nesbox/TIC-80/releases/latest | grep "browser_download_url.*linux.tar.gz" | cut -d '"' -f 4)
+          curl -L -o tic80.tar.gz "$RELEASE_URL"
+          tar -xvf tic80.tar.gz
+          
+          # Ensure executable permissions are granted wherever extracted
+          find . -name "tic80" -type f -exec chmod +x {} \;
+          
+          # Move binary to local directory root if embedded in subfolders
+          find . -name "tic80" -type f -exec mv {} ./tic80 \;
 
       - name: Compile Cartridge to HTML
         run: |
-          mkdir dist
-          ./tic80 --cli --cmd "load sandbox_game.tic & export html distalone=1 & exit"
+          mkdir -p dist
+          # Run wrapped in xvfb for virtual display rendering
+          xvfb-run --auto-servernum ./tic80 --cli --cmd "load sandbox_game.tic & export html distalone=1 & exit"
+          
+          # Move compiled output into place for deployment
           mv dist/game.html dist/index.html
 
       - name: Setup Pages
