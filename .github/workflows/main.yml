@@ -47,11 +47,11 @@ jobs:
       - name: Compile Cartridge to HTML
         run: |
           mkdir -p dist
-          # Pass the cart file positionally right after `tic80`
-          xvfb-run --auto-servernum tic80 --cli --fs=. --cmd "load sandbox_game.tic & export html standalone=1 & exit"
+          # Run export command
+          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & export html standalone=1 & exit" < /dev/null
           
-          # Move the exported HTML file to dist/index.html
-          mv sandbox_game.html dist/index.html
+          # Unzip the exported web package into the dist folder
+          unzip standalone.zip -d dist
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
