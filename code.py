@@ -1,4 +1,4 @@
-# title:   game title
+# title:   gameofnote
 # author:  game developers, email, etc.
 # desc:    short description
 # site:    website link
@@ -6,6 +6,9 @@
 # version: 0.1
 # script:  python
 # this is a test
+
+
+SCREEN_SIZE = (240, 136)
 
 t=0
 x=0
@@ -41,7 +44,7 @@ def TIC():
  global buttonDown, buttonUp, buttonRight, buttonLeft
  if inventmen == True:
   cls(15)
-  map(x, y)
+  map(int((x/speed)/8), int((y/speed)/8))
 
   inventWidth = 15
   inventHeight = 17
@@ -83,7 +86,7 @@ def TIC():
   if btn(2): inventbtnPresses[2] = True
   if btn(3): inventbtnPresses[3] = True
   if btn(4):
-   invent = sprites[inventoryLayout[inventorySellection[1]][inventorySellection[0]]]
+   invent = placeSprites[inventoryLayout[inventorySellection[1]][inventorySellection[0]]]
    inventmen = False
   if inventbtnPresses[0] == True and btn(0) == False:
    inventorySellection[1] -= 1
@@ -111,32 +114,27 @@ def TIC():
   if inventorySellection[1] < 0:
    inventorySellection[1] = len(inventoryLayout) - 1
  else:
-  if btn(0) and ycounter > speed:
-   y -= 1
-   ycounter = 0
-  if btn(1) and ycounter < -speed:
-   y += 1
-   ycounter = 0
-  if btn(2) and xcounter > speed:
-   x -= 1
-   xcounter = 0
-  if btn(3) and xcounter < -speed:
-   x += 1
-   xcounter = 0
-
-  if btn(0): ycounter += 1
-  if btn(1): ycounter -= 1
-  if btn(2): xcounter += 1
-  if btn(3): xcounter -= 1
+  if btn(0): y -= 1
+  if btn(1): y += 1
+  if btn(2): x -= 1
+  if btn(3): x += 1
 
   cls(15)
-  map(x,y, sx=x%8, sy=y%8)
+  if x < 0:
+    x = 0
+  if y < 0:
+    y = 0
+  if x > SCREEN_SIZE[0]*8:
+    x = SCREEN_SIZE[0]*8
+  if y > SCREEN_SIZE[1]*8:
+    y = SCREEN_SIZE[1]*8
+  map(int((x/speed)/8),int((y/speed)/8), sx=-(x%8), sy=-(y%8))
   spr(49, int(240/2), int(136/2))
   t+=1
 
   # placing blocks
   if btn(4): #place
-   mset(int((240/2)/8)+x, int((136/2)/8)+y,invent)
+   mset(int((240/2)/8)+int((x/speed)/8), int((136/2)/8)+int((y/speed)/8), invent)
  if btn(5):
   inventmen = True
 
