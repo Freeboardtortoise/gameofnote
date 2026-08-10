@@ -20,32 +20,52 @@ invent = 1
 inventmen = False
 inventbtnPresses = [False, False, False, False]
 
-inventory = {"grass": 100, "planks": 100, "stone": 100, "leaves": 10, "logs": 2, "chest": 1}
+inventory = {"grass": 10, "planks": 10, "stone": 10, "leaves": 10, "logs": 2, "chest": 1, "":0, "stone pickaxe":1}
 inventoryLayout = [["grass", "planks", "stone","leaves","logs",""],
-                   ["chest","","","","",""],
+                   ["chest","stone pickaxe","","","",""],
                    ["","","","","",""],
                    ["","","","","",""],
                    ["","","","","",""],
                    ["","","","","",""]]
-sprites = {"grass":103, "planks":104, "":150, "stone":105, "leaves": 4, "logs": 5, "chest": 18}
-placeSprites = {"grass":2, "planks":1, "stone":3, "": 0, "leaves": 4, "logs": 5, "chest": 18}
+sprites = {"grass":103, "planks":104, "":150, "stone":105, "leaves": 4, "logs": 5, "chest": 18, "dark stone":20,
+           "stone pickaxe":320, "iron pickaxe": 321, "gold pickaxe": 322, "diamond pickaxe": 323,
+           "stone sword": 336, "iron sword": 336, "gold sword": 337, "diamond sword": 338,
+           "stone spear": 352, "iron spear": 337, "gold spear": 338, "diamond spear": 339,
+           "stone axe": 368, "iron axe":369, "gold axe":370, "diamond axe": 371}
+nonPlacables = ["stone pickaxe", "stone sword", "stone axe", "stone spear",
+                "iron pickaxe", " iron sword", "iron axe", "iron spear",
+                "gold pickaxe", "gold sword", "gold axe", "gold spear",
+                "diamond pickaxe", "diamond sword", "diamond axe", "diamond spear"]
+breaking_tools = {"stone pickaxe":1, "iron pickaxe": 2, "gold pickaxe": 4, "diamond pickaxe": 5}
+placeSprites = {"grass":2, "planks":1, "stone":3, "": 0, "leaves": 4, "logs": 5, "chest": 18, "dark stone":20}
+bottomBlocks = ["dark stone", "grass"]
 inventorySellection = [0,0]
 cBlock = ""
 
 xcounter = 1
 ycounter = 1
 speed = 1
-walkable_blocks = ["grass", "leaves"]
+walkable_blocks = ["grass", "leaves", "dark stone"]
 walkable_blocks = [placeSprites[block] for block in walkable_blocks]
+bottomBlocksBack = [placeSprites[block] for block in bottomBlocks]
 
+stone_map = [
+    [False for x in range(SCREEN_SIZE[0])]
+    for y in range(SCREEN_SIZE[1])
+]
 
 # placing variables
 placingMode = False
 currentDelta = [0,0]
 currentButtonValues = [False, False, False, False]
 MAX_REACH = 4
-def placing(player_pos):
- global placingMode, currentDelta, currentButtonValues
+def placing(player_pos, true_pos):
+ global placingMode, currentDelta, currentButtonValues, nonPlacables, breaking_tools, inventory, bottomBlocksBack
+ spr(120,0,0)
+ for i in range(len(str(inventory[cBlock]))-1):
+  spr(121,(i)*8,0)
+  spr(122,(i+1)*8,0)
+ print(str(inventory[cBlock]), x=1, y=1, color=15, fixed=False, scale=1)
  # 5. Placing blocks (using player's exact world position)
  if btn(4):  # Place block
   if placingMode == False:
@@ -55,10 +75,18 @@ def placing(player_pos):
   spr(100, int(player_pos[0]/8)*8 + 8 * currentDelta[0],int(player_pos[1]/8)*8 +  8 * currentDelta[1], colorkey=0)
   if btn(4) == False:
    placingMode = False
-   if mget(int(x / 8) + currentDelta[0], int(y / 8) + currentDelta[1]) != placeSprites[cBlock]:
-    if inventory[cBlock] > 0:
-     mset(int(x / 8) + currentDelta[0], int(y / 8) + currentDelta[1], placeSprites[cBlock])
-     inventory[cBlock] -= 1
+   if cBlock in nonPlacables:
+    if cBlock in breaking_tools:
+     if {value: key for key, value in placeSprites.items()}[mget(int(player_pos[0] / 8) + currentDelta[0], int(player_pos[1] / 8) + currentDelta[1])] not in bottomBlocks:
+      inventory[{value: key for key, value in placeSprites.items()}[mget(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1])]] += 1
+      mset(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1], placeSprites["grass"])
+
+   else:
+    if mget(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1]) != placeSprites[cBlock]:
+     if inventory[cBlock] > 0:
+      if mget(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1]) in bottomBlocksBack:
+       mset(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1], placeSprites[cBlock])
+       inventory[cBlock] -= 1
 
   if currentButtonValues[0] == True:
    if btn(0) == False:
@@ -110,6 +138,23 @@ def generate_tree(possition=(0,0)):
    else:
     # Draw the leaves around it
     mset(possition[0] + dx, possition[1] + dy, 4)
+def fill_circle(center_x, center_y, radius, tile):
+ for y in range(center_y - radius, center_y + radius + 1):
+  for x in range(center_x - radius, center_x + radius + 1):
+
+   # Keep coordinates inside the screen
+   if x < 0 or x >= SCREEN_SIZE[0]:
+    continue
+
+   if y < 0 or y >= SCREEN_SIZE[1]:
+    continue
+
+   # Check if the tile is inside the circle
+   dx = x - center_x
+   dy = y - center_y
+
+   if dx * dx + dy * dy <= radius * radius:
+    mset(x, y, tile)
 def generate_world(seed):
  for y in range(SCREEN_SIZE[1]):
   for x in range (SCREEN_SIZE[0]):
@@ -156,14 +201,42 @@ def generate_world(seed):
 
    if total_wave > 0.2:
     mset(x, y, placeSprites["stone"])
+    stone_map[y][x] = True
    else:
     
     if total_forrestWave > 0.2:
      if x * random.randint(1, treeRandomise) % 4 == 0 and y * random.randint(1, treeRandomise) % 4 == 0:
       generate_tree((x,y))
+ 
+ # generating caves
+ 
+ wormStarters = []
+ worms = 10
+ # find random stone blocks
+ while len(wormStarters) <  worms:
+  testPoint = [random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1])]
+  if mget(testPoint[0], testPoint[1]) == 3 and testPoint not in wormStarters:
+   wormStarters.append(testPoint)
+ # walking worm by worm
+ worm_steps = 100
+ radius = 3
+ speed = 3
+ directional_speed = 4
+ for worm in wormStarters:
+  radius = random.randint(1,3)
+  currentPoss = worm
+  direction = [random.randint(-directional_speed,directional_speed), random.randint(-directional_speed,directional_speed)]
+  for i in range(worm_steps):
+   delta = [random.randint(-speed,speed) + direction[0], random.randint(-speed,speed) + direction[1]]
+   if mget(currentPoss[0] + delta[0], currentPoss[1] + delta[1]) == 3:
+    currentPoss = [currentPoss[0] + delta[0], currentPoss[1] + delta[1]]
+    fill_circle(currentPoss[0], currentPoss[1], radius + random.randint(radius-1,radius + 1), 20)
+
 
 
 generate_world(random.randint(0,1000))
+
+
 def TIC():
  global t
  global x
@@ -283,7 +356,7 @@ def TIC():
 
   if inventorySellection[1] < 0:
    inventorySellection[1] = len(inventoryLayout) - 1
- elif placing(( x - cam_x, y - cam_y)) == True:
+ elif placing((x - cam_x, y - cam_y), (x,y)) == True:
   pass
  else:
 
