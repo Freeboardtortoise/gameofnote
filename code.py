@@ -6,6 +6,8 @@
 # version: 0.1
 # script:  python
 # this is a test
+import random
+import math
 
 
 SCREEN_SIZE = (240, 136)
@@ -33,7 +35,7 @@ cBlock = ""
 xcounter = 1
 ycounter = 1
 speed = 1
-walkable_blocks = ["grass"]
+walkable_blocks = ["grass", "leaves"]
 walkable_blocks = [placeSprites[block] for block in walkable_blocks]
 
 
@@ -90,6 +92,78 @@ def placing(player_pos):
    currentButtonValues[3] = True
  return placingMode
 
+
+def generate_tree(possition=(0,0)):
+ # Set the center trunk first
+ mset(possition[0], possition[1], 5)
+ 
+ # Loop through the 3x3 grid
+ for y in range(3):
+  for x in range(3):
+   # Calculate proper relative offsets (-1, 0, 1)
+   dx = x - 1
+   dy = y - 1
+   
+   # Skip the center tile so we don't overwrite our trunk (5)
+   if dx == 0 and dy == 0:
+    pass
+   else:
+    # Draw the leaves around it
+    mset(possition[0] + dx, possition[1] + dy, 4)
+def generate_world(seed):
+ for y in range(SCREEN_SIZE[1]):
+  for x in range (SCREEN_SIZE[0]):
+   mset(x, y, placeSprites["grass"])
+ random.seed(seed)
+
+ offset_x1 = random.uniform(0, 100)
+ offset_y1 = random.uniform(0, 100)
+ offset_x2 = random.uniform(0, 100)
+ offset_y2 = random.uniform(0, 100)
+
+ forrestoffset_x1 = random.uniform(0, 100)
+ forrestoffset_y1 = random.uniform(0, 100)
+ forrestoffset_x2 = random.uniform(0, 100)
+ forrestoffset_y2 = random.uniform(0, 100)
+
+ frequency = 0.04
+ treeRandomise = 2
+
+ for y in range(SCREEN_SIZE[1]):
+  for x in range(240):
+   heightx = (x * frequency) + offset_x1
+   heighty = (y * frequency) + offset_y1
+
+   heightwave1 = math.sin(heightx) * math.cos(heighty)
+
+   heightnx2 = (x * (frequency * 2.5)) + offset_x2
+   heightny2 = (y * (frequency * 2.5)) + offset_y2
+   heightwave2 = math.sin(heightnx2) * math.cos(heightny2) * 0.4
+
+   total_wave = heightwave1 + heightwave2
+
+   # forest wave
+   forrestx = (x * frequency) + forrestoffset_x1
+   forresty = (y * frequency) + forrestoffset_y1
+
+   forrestwave1 = math.sin(forrestx) * math.cos(forresty)
+
+   forrestnx2 = (x * (frequency * 2.5)) + forrestoffset_x2
+   forrestny2 = (y * (frequency * 2.5)) + forrestoffset_y2
+   forrestwave2 = math.sin(forrestnx2) * math.cos(forrestny2) * 0.4
+   total_forrestWave = forrestwave1 + forrestwave2
+
+
+   if total_wave > 0.2:
+    mset(x, y, placeSprites["stone"])
+   else:
+    
+    if total_forrestWave > 0.2:
+     if x * random.randint(1, treeRandomise) % 4 == 0 and y * random.randint(1, treeRandomise) % 4 == 0:
+      generate_tree((x,y))
+
+
+generate_world(random.randint(0,1000))
 def TIC():
  global t
  global x
@@ -98,6 +172,7 @@ def TIC():
  global inventory, inventoryLayout, inventbtnPresses
  global xcounter, ycounter
  global buttonDown, buttonUp, buttonRight, buttonLeft
+
  SCREEN_W = 240
  SCREEN_H = 136
  HALF_W = SCREEN_W // 2
