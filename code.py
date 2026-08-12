@@ -49,6 +49,97 @@ walkable_blocks = ["grass", "leaves", "dark stone"]
 walkable_blocks = [placeSprites[block] for block in walkable_blocks]
 bottomBlocksBack = [placeSprites[block] for block in bottomBlocks]
 
+
+#player stuff
+PLAYERMAXHEALTH = 20
+
+
+playerCurrentHealth = PLAYERMAXHEALTH
+
+class Mob:
+ def __init__(self, startPos, health, speed, damage, hostile, sprite, spriteSize, attack_range, collide, attackSpeed):
+  # constants
+  TOP_MOVEMENT_SPEED = 20
+  TOP_DIRECTION_SPEED = 10
+
+
+  # variables
+  self.hp = health
+  self.startPos = [startPos[0], startPos[1]]
+  self.hostile = hostile
+  self.damage = damage
+  self.damageTimer = attackSpeed
+  self.damageTimerMax = attackSpeed
+  self.speed = speed
+  self.sprite = sprite
+  self.size = spriteSize
+  self.range = attack_range
+  self.currentPos = [startPos[0], startPos[1]]
+
+  #movementAI
+  self.direction = [random.randint(-1,1),random.randint(-1,1)]
+  self.directionTimer = 10
+  self.directionTimerTop = random.randint(10,TOP_DIRECTION_SPEED)
+  self.movementTimer = 10
+  self.movementTimerTop = random.randint(10, TOP_MOVEMENT_SPEED)
+
+  self.colide = collide
+ 
+
+ def draw(self, cameraPos):
+  spr(self.sprite, int(self.currentPos[0])-cameraPos[0], int(self.currentPos[1])-cameraPos[1], self.size, colorkey=1)
+ 
+ 
+ def pathfinding(self, move):
+  x = self.currentPos[0] + move[0]
+  y = self.currentPos[1] + move[1]
+  if mget(int(x / 8), int((y) / 8)) not in walkable_blocks or mget(int((x+7) / 8), int((y) / 8)) not in walkable_blocks or mget(int((x) / 8), int((y+7) / 8)) not in walkable_blocks or mget(int((x+7) / 8), int((y+7) / 8)) not in walkable_blocks:
+   # try and move only up and down
+   if mget(int(self.currentPos[0] / 8), int((y) / 8)) not in walkable_blocks:
+    move[0] = 0
+   if mget(int(x / 8), int(self.currentPos[1] / 8)) not in walkable_blocks: 
+    move[1] = 0
+   else:
+    move[0] = 0
+    move[1] = 0
+  # do the actual moving
+  self.currentPos = [self.currentPos[0] + move[0], self.currentPos[1] + move[1]] 
+ 
+ def damaging(self, playerPos):
+  global playerCurrentHealth
+  self.damageTimer -= 1
+  if self.damageTimer < 0:
+   if abs(self.currentPos[0] - playerPos[0]) < 8 and  abs(self.currentPos[1] - playerPos[1]) < 8:
+    playerCurrentHealth -= self.damage
+    self.damageTimer = self.damageTimerMax
+
+   
+
+ def movement(self, playerPos):
+  # hostile movement
+  if self.hostile:
+   if abs(playerPos[0] - self.currentPos[0]) < self.range and abs(playerPos[1] - self.currentPos[1]) < self.range:
+    # move towards the target
+    self.pathfinding([(1 if playerPos[0] > self.currentPos[0] else (-1 if playerPos[0] < self.currentPos[0] else 0))*self.speed, 
+                      (1 if playerPos[1] > self.currentPos[1] else (-1 if playerPos[1] < self.currentPos[1] else 0))*self.speed])
+  self.directionTimer -= 1
+  #general movement
+  if self.movementTimer < 0:
+   self.pathfinding(self.direction)
+   self.movementTimer = self.movementTimerTop
+  self.movementTimer -= 1
+  self.directionTimer -= 1
+  if self.directionTimer < 0:
+   self.directionTimer = self.directionTimerTop
+   self.direction = [random.randint(-1,1),random.randint(-1,1)]
+   self.directionTimer = self.directionTimerTop
+
+ def loop(self, playerPos):
+  self.movement(playerPos)
+  if self.hostile:
+   self.damaging(playerPos)
+
+
 stone_map = [
     [False for x in range(SCREEN_SIZE[0])]
     for y in range(SCREEN_SIZE[1])
@@ -235,6 +326,15 @@ def generate_world(seed):
 
 
 generate_world(random.randint(0,1000))
+test = Mob((0,0), 100, 0.5, 0.5, True, 277, 2, 100, True, 10)
+
+
+def display_lives():
+ global playerCurrentHealth
+ offset = 20
+ row = 0
+ for i in range(int(playerCurrentHealth/10)):
+  spr(385, i*9 + offset, row, colorkey=0)
 
 
 def TIC():
@@ -285,6 +385,9 @@ def TIC():
   cam_y = max_cam_y
 
  map(int((cam_x/speed)/8), int((cam_y/speed)/8), sx=-(cam_x%8), sy=-(cam_y%8))
+ test.draw((cam_x, cam_y))
+ test.loop((x,y))
+ display_lives()
  if inventmen == True:
   cls(15)
   map(int((x/speed)/8), int((y/speed)/8))
