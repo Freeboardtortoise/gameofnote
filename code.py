@@ -8,6 +8,7 @@
 # this is a test
 import random
 import math
+import time
 
 
 SCREEN_SIZE = (240, 136)
@@ -51,7 +52,7 @@ bottomBlocksBack = [placeSprites[block] for block in bottomBlocks]
 
 
 #player stuff
-PLAYERMAXHEALTH = 20
+PLAYERMAXHEALTH = 100
 
 
 playerCurrentHealth = PLAYERMAXHEALTH
@@ -79,7 +80,7 @@ class Mob:
   #movementAI
   self.direction = [random.randint(-1,1),random.randint(-1,1)]
   self.directionTimer = 10
-  self.directionTimerTop = random.randint(10,TOP_DIRECTION_SPEED)
+  self.directionTimerTop = random.randint(10, TOP_DIRECTION_SPEED)
   self.movementTimer = 10
   self.movementTimerTop = random.randint(10, TOP_MOVEMENT_SPEED)
 
@@ -95,13 +96,11 @@ class Mob:
   y = self.currentPos[1] + move[1]
   if mget(int(x / 8), int((y) / 8)) not in walkable_blocks or mget(int((x+7) / 8), int((y) / 8)) not in walkable_blocks or mget(int((x) / 8), int((y+7) / 8)) not in walkable_blocks or mget(int((x+7) / 8), int((y+7) / 8)) not in walkable_blocks:
    # try and move only up and down
-   if mget(int(self.currentPos[0] / 8), int((y) / 8)) not in walkable_blocks:
+   if  mget(int((self.currentPos[0] / 8)), int((y+7) / 8)) not in walkable_blocks or mget(int((self.currentPos[0]+7) / 8), int((y+7) / 8)) not in walkable_blocks:
     move[0] = 0
-   if mget(int(x / 8), int(self.currentPos[1] / 8)) not in walkable_blocks: 
+   if mget(int(x / 8), int((self.currentPos[1]) / 8)) not in walkable_blocks or mget(int((x+7) / 8), int((self.currentPos[1]) / 8)) not in walkable_blocks : 
     move[1] = 0
-   else:
-    move[0] = 0
-    move[1] = 0
+
   # do the actual moving
   self.currentPos = [self.currentPos[0] + move[0], self.currentPos[1] + move[1]] 
  
@@ -246,6 +245,30 @@ def fill_circle(center_x, center_y, radius, tile):
 
    if dx * dx + dy * dy <= radius * radius:
     mset(x, y, tile)
+
+def generate_caves():
+ wormStarters = []
+ worms = 10
+ # find random stone blocks
+ while len(wormStarters) <  worms:
+  testPoint = [random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1])]
+  if mget(testPoint[0], testPoint[1]) == 3 and testPoint not in wormStarters:
+   wormStarters.append(testPoint)
+ # walking worm by worm
+ worm_steps = 100
+ radius = 3
+ speed = 3
+ directional_speed = 4
+ for worm in wormStarters:
+  radius = random.randint(1,3)
+  currentPoss = worm
+  direction = [random.randint(-directional_speed,directional_speed), random.randint(-directional_speed,directional_speed)]
+  for i in range(worm_steps):
+   delta = [random.randint(-speed,speed) + direction[0], random.randint(-speed,speed) + direction[1]]
+   if mget(currentPoss[0] + delta[0], currentPoss[1] + delta[1]) == 3:
+    currentPoss = [currentPoss[0] + delta[0], currentPoss[1] + delta[1]]
+    fill_circle(currentPoss[0], currentPoss[1], radius + random.randint(radius-1,radius + 1), 20)
+
 def generate_world(seed):
  for y in range(SCREEN_SIZE[1]):
   for x in range (SCREEN_SIZE[0]):
@@ -300,41 +323,35 @@ def generate_world(seed):
       generate_tree((x,y))
  
  # generating caves
+ generate_caves()
  
- wormStarters = []
- worms = 10
- # find random stone blocks
- while len(wormStarters) <  worms:
-  testPoint = [random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1])]
-  if mget(testPoint[0], testPoint[1]) == 3 and testPoint not in wormStarters:
-   wormStarters.append(testPoint)
- # walking worm by worm
- worm_steps = 100
- radius = 3
- speed = 3
- directional_speed = 4
- for worm in wormStarters:
-  radius = random.randint(1,3)
-  currentPoss = worm
-  direction = [random.randint(-directional_speed,directional_speed), random.randint(-directional_speed,directional_speed)]
-  for i in range(worm_steps):
-   delta = [random.randint(-speed,speed) + direction[0], random.randint(-speed,speed) + direction[1]]
-   if mget(currentPoss[0] + delta[0], currentPoss[1] + delta[1]) == 3:
-    currentPoss = [currentPoss[0] + delta[0], currentPoss[1] + delta[1]]
-    fill_circle(currentPoss[0], currentPoss[1], radius + random.randint(radius-1,radius + 1), 20)
-
+ 
 
 
 generate_world(random.randint(0,1000))
 test = Mob((0,0), 100, 0.5, 0.5, True, 277, 2, 100, True, 10)
-
+mobs = []
 
 def display_lives():
  global playerCurrentHealth
+
  offset = 20
  row = 0
- for i in range(int(playerCurrentHealth/10)):
-  spr(385, i*9 + offset, row, colorkey=0)
+
+ full_hearts = int(playerCurrentHealth / 10)
+
+ for i in range(full_hearts):
+  spr(385, i * 9 + offset, row, colorkey=0)
+
+ if playerCurrentHealth % 10 >= 5:
+  spr(384, full_hearts * 9 + offset, row, colorkey=0)
+
+def DeathScreen():
+ cls(0)
+ print(str("You are dead"), x=int(SCREEN_SIZE[0]/2), y=int(SCREEN_SIZE[1]/2), color=15, fixed=False, scale=3)
+ print(str("Yes you read that correctly"), x=int(SCREEN_SIZE[0]/2), y=int(SCREEN_SIZE[1]/2)+20, color=15, fixed=False, scale=1)
+ time.sleep(10)
+ exit()
 
 
 def TIC():
@@ -345,6 +362,12 @@ def TIC():
  global inventory, inventoryLayout, inventbtnPresses
  global xcounter, ycounter
  global buttonDown, buttonUp, buttonRight, buttonLeft
+ global mobs
+ if len(mobs) < 10:
+  mobs.append(Mob((random.randint(0,SCREEN_SIZE[0]*8),random.randint(0, SCREEN_SIZE[1]*8)), 100, 0.5, 0.5, True, 277, 2, 100, True, 10))
+ if playerCurrentHealth <= 0:
+  DeathScreen()
+
 
  SCREEN_W = 240
  SCREEN_H = 136
@@ -385,8 +408,9 @@ def TIC():
   cam_y = max_cam_y
 
  map(int((cam_x/speed)/8), int((cam_y/speed)/8), sx=-(cam_x%8), sy=-(cam_y%8))
- test.draw((cam_x, cam_y))
- test.loop((x,y))
+ for mob in mobs:
+  mob.draw((cam_x, cam_y))
+  mob.loop((x,y))
  display_lives()
  if inventmen == True:
   cls(15)
