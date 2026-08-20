@@ -343,7 +343,7 @@ def display_lives():
  for i in range(full_hearts):
   spr(385, i * 9 + offset, row, colorkey=0)
 
- if playerCurrentHealth % 10 >= 5:
+ if int(playerCurrentHealth) % 10 >= 5:
   spr(384, full_hearts * 9 + offset, row, colorkey=0)
 
 def DeathScreen():
