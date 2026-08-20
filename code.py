@@ -211,7 +211,7 @@ def placing(player_pos, true_pos):
  return placingMode
 
 
-def generate_tree(possition=(0,0)):
+def generate_tree(possition):
  # Set the center trunk first
  mset(possition[0], possition[1], 5)
  
