@@ -175,7 +175,7 @@ class Mob:
  def movement(self, playerPos):
   # hostile movement
   if self.hostile:
-   if abs(playerPos - self.currentPos) < self.range:
+   if abs((playerPos - self.currentPos).x) < self.range and abs((playerPos - self.currentPos).y) < self.range:
     # move towards the target
     move_x = 0
     move_y = 0
