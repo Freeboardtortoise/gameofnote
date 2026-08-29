@@ -10,12 +10,74 @@ import random
 import math
 import time
 
+# Vector2(0,0)
+# [0,0]
+# Vector2 + Vector2
+# [v1[0] + v2[0], v1[1] + v2[1]]
+class Vector2:
+ def __init__(self, x,y):
+   self.x = x
+   self.y = y
+ def __add__(self, other):
+  return Vector2(self.x + other.x, self.y + other.y)
+ def __sub__(self, other):
+  return Vector2(self.x - other.x, self.y - other.y)
+ def __mul__(self, other):
+  if isinstance(other, (Vector2)):
+   return Vector2(self.x * other.x, self.y * other.y)
+  else:
+   return Vector2(self.x * other, self.y * other)
+ def __rmul__(self, scaler):
+  return Vector2(self.x * scaler, self.y * scaler)
+ def __truediv__(self, scaler):
+  return Vector2(self.x / scaler, self.y / scaler)
+ def __floordiv__(self, scaler):
+  return Vector2(self.x // scaler, self.y // scaler)
+ def __iadd__(self, other):
+  self.x += other.x
+  self.y += other.y
+  return self
+ def __isub__(self, other):
+  self.x -= other.x
+  self.y -= other.y
+  return self
+ def __eq__(self,other):
+  if self.x == other.x and self.y == other.y:
+   return True
+ def __ne__(self, other):
+  if self.x == other.x and self.y == other.y:
+   return True
+  else:
+   return False
+ def __lt__(self, other):
+  if isinstance(other, Vector2):
+   if self.x < other.x and self.y < other.y:
+    return True
+  else:
+   if self.x < other and self.y < other:
+    return True
+ def __gt__(self, other):
+  if isinstance(other, Vector2):
+   if self.x > other.x and self.y < other.y:
+    return True
+  else:
+   if self.x > other and self.y > other:
+    return True
+
+ def __repr__(self):
+  return f"Vector2(x: {self.x},y: {self.y})"
+ def dupl(self):
+  return Vector2(self.x, self.y)
+ def __abs__(self):
+  return Vector2(abs(self.x), abs(self.y))
+
+
+
 
 SCREEN_SIZE = (240, 136)
 
 t=0
-x=0
-y=0
+pos = Vector2(0,0)
 
 invent = 1
 inventmen = False
@@ -43,8 +105,7 @@ bottomBlocks = ["dark stone", "grass"]
 inventorySellection = [0,0]
 cBlock = ""
 
-xcounter = 1
-ycounter = 1
+counter = Vector2(0,0)
 speed = 1
 walkable_blocks = ["grass", "leaves", "dark stone"]
 walkable_blocks = [placeSprites[block] for block in walkable_blocks]
@@ -66,7 +127,7 @@ class Mob:
 
   # variables
   self.hp = health
-  self.startPos = [startPos[0], startPos[1]]
+  self.startPos = startPos.dupl()
   self.hostile = hostile
   self.damage = damage
   self.damageTimer = attackSpeed
@@ -75,10 +136,9 @@ class Mob:
   self.sprite = sprite
   self.size = spriteSize
   self.range = attack_range
-  self.currentPos = [startPos[0], startPos[1]]
-
+  self.currentPos = self.startPos.dupl()
   #movementAI
-  self.direction = [random.randint(-1,1),random.randint(-1,1)]
+  self.direction = Vector2(random.randint(-1,1),random.randint(-1,1))
   self.directionTimer = 10
   self.directionTimerTop = random.randint(10, TOP_DIRECTION_SPEED)
   self.movementTimer = 10
@@ -88,27 +148,25 @@ class Mob:
  
 
  def draw(self, cameraPos):
-  spr(self.sprite, int(self.currentPos[0])-cameraPos[0], int(self.currentPos[1])-cameraPos[1], self.size, colorkey=1)
+  spr(self.sprite, int(self.currentPos.x)-cameraPos.x, int(self.currentPos.y)-cameraPos.y, self.size, colorkey=1)
  
  
  def pathfinding(self, move):
-  x = self.currentPos[0] + move[0]
-  y = self.currentPos[1] + move[1]
-  if mget(int(x / 8), int((y) / 8)) not in walkable_blocks or mget(int((x+7) / 8), int((y) / 8)) not in walkable_blocks or mget(int((x) / 8), int((y+7) / 8)) not in walkable_blocks or mget(int((x+7) / 8), int((y+7) / 8)) not in walkable_blocks:
+  pos = self.currentPos + move
+  if mget(int(pos.x / 8), int(pos.y / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((pos.y) / 8)) not in walkable_blocks or mget(int((pos.x) / 8), int((pos.y+7) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((pos.y+7) / 8)) not in walkable_blocks:
    # try and move only up and down
-   if  mget(int((self.currentPos[0] / 8)), int((y+7) / 8)) not in walkable_blocks or mget(int((self.currentPos[0]+7) / 8), int((y+7) / 8)) not in walkable_blocks:
-    move[0] = 0
-   if mget(int(x / 8), int((self.currentPos[1]) / 8)) not in walkable_blocks or mget(int((x+7) / 8), int((self.currentPos[1]) / 8)) not in walkable_blocks : 
-    move[1] = 0
+   if  mget(int((self.currentPos.x / 8)), int((pos.y+7) / 8)) not in walkable_blocks or mget(int((self.currentPos.x+7) / 8), int((pos.y+7) / 8)) not in walkable_blocks:
+    move.x = 0
+   if mget(int(pos.x / 8), int((self.currentPos.x) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((self.currentPos.x) / 8)) not in walkable_blocks : 
+    move.y = 0
 
   # do the actual moving
-  self.currentPos = [self.currentPos[0] + move[0], self.currentPos[1] + move[1]] 
- 
+  self.currentPos +=  move
  def damaging(self, playerPos):
   global playerCurrentHealth
   self.damageTimer -= 1
   if self.damageTimer < 0:
-   if abs(self.currentPos[0] - playerPos[0]) < 8 and  abs(self.currentPos[1] - playerPos[1]) < 8:
+   if abs(self.currentPos - playerPos) < 8:
     playerCurrentHealth -= self.damage
     self.damageTimer = self.damageTimerMax
 
@@ -117,10 +175,24 @@ class Mob:
  def movement(self, playerPos):
   # hostile movement
   if self.hostile:
-   if abs(playerPos[0] - self.currentPos[0]) < self.range and abs(playerPos[1] - self.currentPos[1]) < self.range:
+   if abs(playerPos - self.currentPos) < self.range:
     # move towards the target
-    self.pathfinding([(1 if playerPos[0] > self.currentPos[0] else (-1 if playerPos[0] < self.currentPos[0] else 0))*self.speed, 
-                      (1 if playerPos[1] > self.currentPos[1] else (-1 if playerPos[1] < self.currentPos[1] else 0))*self.speed])
+    move_x = 0
+    move_y = 0
+
+    if playerPos.x > self.currentPos.x:
+     move_x = self.speed
+    elif playerPos.x < self.currentPos.x:
+     move_x = -self.speed
+
+    if playerPos.y > self.currentPos.y:
+     move_y = self.speed
+    elif playerPos.y < self.currentPos.y:
+     move_y = -self.speed
+
+    self.pathfinding(Vector2(move_x, move_y))
+
+
   self.directionTimer -= 1
   #general movement
   if self.movementTimer < 0:
@@ -130,7 +202,7 @@ class Mob:
   self.directionTimer -= 1
   if self.directionTimer < 0:
    self.directionTimer = self.directionTimerTop
-   self.direction = [random.randint(-1,1),random.randint(-1,1)]
+   self.direction = Vector2(random.randint(-1,1),random.randint(-1,1))
    self.directionTimer = self.directionTimerTop
 
  def loop(self, playerPos):
@@ -146,7 +218,7 @@ stone_map = [
 
 # placing variables
 placingMode = False
-currentDelta = [0,0]
+currentDelta = Vector2(0,0)
 currentButtonValues = [False, False, False, False]
 MAX_REACH = 4
 def placing(player_pos, true_pos):
@@ -159,45 +231,47 @@ def placing(player_pos, true_pos):
  # 5. Placing blocks (using player's exact world position)
  if btn(4):  # Place block
   if placingMode == False:
-   currentDelta = [0,0]
+   currentDelta = Vector2(0,0)
   placingMode = True
  if placingMode == True:
-  spr(100, int(player_pos[0]/8)*8 + 8 * currentDelta[0],int(player_pos[1]/8)*8 +  8 * currentDelta[1], colorkey=0)
+  # remember that player_pos is relitive to the screen, not the map
+  spr(100, int(player_pos.x/8)*8 + 8 * currentDelta.x,int(player_pos.y/8)*8 +  8 * currentDelta.y, colorkey=0)
+
   if btn(4) == False:
    placingMode = False
    if cBlock in nonPlacables:
     if cBlock in breaking_tools:
-     if {value: key for key, value in placeSprites.items()}[mget(int(player_pos[0] / 8) + currentDelta[0], int(player_pos[1] / 8) + currentDelta[1])] not in bottomBlocks:
-      inventory[{value: key for key, value in placeSprites.items()}[mget(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1])]] += 1
-      mset(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1], placeSprites["grass"])
+     if {value: key for key, value in placeSprites.items()}[mget(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y)] not in bottomBlocks:
+      inventory[{value: key for key, value in placeSprites.items()}[mget(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y)]] += 1
+      mset(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y, placeSprites["grass"])
 
    else:
-    if mget(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1]) != placeSprites[cBlock]:
+    if mget(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y) != placeSprites[cBlock]:
      if inventory[cBlock] > 0:
-      if mget(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1]) in bottomBlocksBack:
-       mset(int(true_pos[0] / 8) + currentDelta[0], int(true_pos[1] / 8) + currentDelta[1], placeSprites[cBlock])
+      if mget(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y) in bottomBlocksBack:
+       mset(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y, placeSprites[cBlock])
        inventory[cBlock] -= 1
 
   if currentButtonValues[0] == True:
    if btn(0) == False:
     currentButtonValues[0] = False
-    currentDelta[1] -= 1
+    currentDelta.y -= 1
   if currentButtonValues[1] == True:
    if btn(1) == False:
     currentButtonValues[1] = False
-    currentDelta[1] += 1
+    currentDelta.y += 1
   if currentButtonValues[2] == True:
    if btn(2) == False:
     currentButtonValues[2] = False
-    currentDelta[0] -= 1
+    currentDelta.x -= 1
   if currentButtonValues[3] == True:
    if btn(3) == False:
     currentButtonValues[3] = False
-    currentDelta[0] += 1
-  if abs(currentDelta[0]) > MAX_REACH:
-   currentDelta[0] += MAX_REACH - currentDelta[0]
-  if abs(currentDelta[1]) > MAX_REACH:
-   currentDelta[1] += MAX_REACH - currentDelta[1]
+    currentDelta.x += 1
+  if abs(currentDelta.x) > MAX_REACH:
+   currentDelta.x += MAX_REACH - currentDelta.x
+  if abs(currentDelta.y) > MAX_REACH:
+   currentDelta.y += MAX_REACH - currentDelta.y
 
 
   if btn(0):
@@ -211,9 +285,9 @@ def placing(player_pos, true_pos):
  return placingMode
 
 
-def generate_tree(possition=(0,0)):
+def generate_tree(possition):
  # Set the center trunk first
- mset(possition[0], possition[1], 5)
+ mset(possition.x, possition.y, 5)
  
  # Loop through the 3x3 grid
  for y in range(3):
@@ -227,10 +301,10 @@ def generate_tree(possition=(0,0)):
     pass
    else:
     # Draw the leaves around it
-    mset(possition[0] + dx, possition[1] + dy, 4)
-def fill_circle(center_x, center_y, radius, tile):
- for y in range(center_y - radius, center_y + radius + 1):
-  for x in range(center_x - radius, center_x + radius + 1):
+    mset(possition.x + dx, possition.y + dy, 4)
+def fill_circle(center, radius, tile):
+ for y in range(center.y - radius, center.y + radius + 1):
+  for x in range(center.x - radius, center.x + radius + 1):
 
    # Keep coordinates inside the screen
    if x < 0 or x >= SCREEN_SIZE[0]:
@@ -240,8 +314,8 @@ def fill_circle(center_x, center_y, radius, tile):
     continue
 
    # Check if the tile is inside the circle
-   dx = x - center_x
-   dy = y - center_y
+   dx = x - center.x
+   dy = y - center.y
 
    if dx * dx + dy * dy <= radius * radius:
     mset(x, y, tile)
@@ -251,8 +325,8 @@ def generate_caves():
  worms = 10
  # find random stone blocks
  while len(wormStarters) <  worms:
-  testPoint = [random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1])]
-  if mget(testPoint[0], testPoint[1]) == 3 and testPoint not in wormStarters:
+  testPoint = Vector2(random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1]))
+  if mget(testPoint.x, testPoint.y) == 3 and testPoint not in wormStarters:
    wormStarters.append(testPoint)
  # walking worm by worm
  worm_steps = 100
@@ -262,12 +336,12 @@ def generate_caves():
  for worm in wormStarters:
   radius = random.randint(1,3)
   currentPoss = worm
-  direction = [random.randint(-directional_speed,directional_speed), random.randint(-directional_speed,directional_speed)]
+  direction = Vector2(random.randint(-directional_speed,directional_speed), random.randint(-directional_speed,directional_speed))
   for i in range(worm_steps):
-   delta = [random.randint(-speed,speed) + direction[0], random.randint(-speed,speed) + direction[1]]
-   if mget(currentPoss[0] + delta[0], currentPoss[1] + delta[1]) == 3:
-    currentPoss = [currentPoss[0] + delta[0], currentPoss[1] + delta[1]]
-    fill_circle(currentPoss[0], currentPoss[1], radius + random.randint(radius-1,radius + 1), 20)
+   delta = Vector2(random.randint(-speed,speed), random.randint(-speed,speed)) + direction
+   if mget(currentPoss.x + delta.x, currentPoss.y + delta.y) == 3:
+    currentPoss += delta
+    fill_circle(currentPoss, radius + random.randint(radius-1,radius + 1), 20)
 
 def generate_world(seed):
  for y in range(SCREEN_SIZE[1]):
@@ -275,41 +349,35 @@ def generate_world(seed):
    mset(x, y, placeSprites["grass"])
  random.seed(seed)
 
- offset_x1 = random.uniform(0, 100)
- offset_y1 = random.uniform(0, 100)
- offset_x2 = random.uniform(0, 100)
- offset_y2 = random.uniform(0, 100)
+ offset_1 = Vector2(random.uniform(0, 100), random.uniform(0,100))
+ offset_2 = Vector2(random.uniform(0, 100), random.uniform(0,100))
 
- forrestoffset_x1 = random.uniform(0, 100)
- forrestoffset_y1 = random.uniform(0, 100)
- forrestoffset_x2 = random.uniform(0, 100)
- forrestoffset_y2 = random.uniform(0, 100)
+ forrestoffset_1 = Vector2(random.uniform(0, 100), random.uniform(0,100))
+ forrestoffset_2 = Vector2(random.uniform(0, 100), random.uniform(0,100))
 
  frequency = 0.04
  treeRandomise = 2
 
+ height = Vector2(0,0)
  for y in range(SCREEN_SIZE[1]):
   for x in range(240):
-   heightx = (x * frequency) + offset_x1
-   heighty = (y * frequency) + offset_y1
+   height = Vector2(x,y) * frequency + offset_1
 
-   heightwave1 = math.sin(heightx) * math.cos(heighty)
+   heightwave1 = math.sin(height.x) * math.cos(height.y)
 
-   heightnx2 = (x * (frequency * 2.5)) + offset_x2
-   heightny2 = (y * (frequency * 2.5)) + offset_y2
-   heightwave2 = math.sin(heightnx2) * math.cos(heightny2) * 0.4
+   height2 = Vector2(x,y) * frequency * 2.5 + offset_2
+   heightwave2 = math.sin(height2.x) * math.cos(height2.y) * 0.4
 
    total_wave = heightwave1 + heightwave2
 
    # forest wave
-   forrestx = (x * frequency) + forrestoffset_x1
-   forresty = (y * frequency) + forrestoffset_y1
+   forrest = Vector2(x,y) * frequency + forrestoffset_2
 
-   forrestwave1 = math.sin(forrestx) * math.cos(forresty)
 
-   forrestnx2 = (x * (frequency * 2.5)) + forrestoffset_x2
-   forrestny2 = (y * (frequency * 2.5)) + forrestoffset_y2
-   forrestwave2 = math.sin(forrestnx2) * math.cos(forrestny2) * 0.4
+   forrestwave1 = math.sin(forrest.x) * math.cos(forrest.y)
+
+   forrest2 = Vector2(x,y) * frequency * 2.5 + forrestoffset_2
+   forrestwave2 = math.sin(forrest2.x) * math.cos(forrest2.y) * 0.4
    total_forrestWave = forrestwave1 + forrestwave2
 
 
@@ -320,7 +388,7 @@ def generate_world(seed):
     
     if total_forrestWave > 0.2:
      if x * random.randint(1, treeRandomise) % 4 == 0 and y * random.randint(1, treeRandomise) % 4 == 0:
-      generate_tree((x,y))
+      generate_tree(Vector2(x,y))
  
  # generating caves
  generate_caves()
@@ -329,7 +397,7 @@ def generate_world(seed):
 
 
 generate_world(random.randint(0,1000))
-test = Mob((0,0), 100, 0.5, 0.5, True, 277, 2, 100, True, 10)
+test = Mob(Vector2(0,0), 100, 0.5, 0.5, True, 277, 2, 100, True, 10)
 mobs = []
 
 def display_lives():
@@ -356,23 +424,24 @@ def DeathScreen():
 
 def TIC():
  global t
- global x
- global y
+ global pos
  global invent, inventmen, cBlock, walkable_blocks
  global inventory, inventoryLayout, inventbtnPresses
- global xcounter, ycounter
+ global counter
  global buttonDown, buttonUp, buttonRight, buttonLeft
  global mobs
  if len(mobs) < 10:
-  mobs.append(Mob((random.randint(0,SCREEN_SIZE[0]*8),random.randint(0, SCREEN_SIZE[1]*8)), 100, 0.5, 0.5, True, 277, 2, 100, True, 10))
+  mobs.append(Mob(Vector2(random.randint(0,SCREEN_SIZE[0]*8),random.randint(0, SCREEN_SIZE[1]*8)), 100, 0.5, 0.5, True, 277, 2, 100, True, 10))
  if playerCurrentHealth <= 0:
   DeathScreen()
 
 
  SCREEN_W = 240
  SCREEN_H = 136
+ SCREEN = Vector2(SCREEN_W, SCREEN_H)
  HALF_W = SCREEN_W // 2
  HALF_H = SCREEN_H // 2
+ HALF_SCREEN_SIZE = SCREEN // 2
 
 # Total map size in pixels
  map_pixel_w = SCREEN_SIZE[0] * 8
@@ -381,40 +450,38 @@ def TIC():
  cls(15)
 
 # 1. Keep player (x, y) strictly within map boundaries
- if x < 0:
-  x = 0
- if y < 0:
-  y = 0
- if x > map_pixel_w:
-  x = map_pixel_w
- if y > map_pixel_h:
-  y = map_pixel_h
+ if pos.x < 0:
+  pos.x = 0
+ if pos.y < 0:
+  pos.y = 0
+ if pos.x > map_pixel_w:
+  pos.x = map_pixel_w
+ if pos.y > map_pixel_h:
+  pos.y = map_pixel_h
 
 # 2. Calculate camera position centered on the player
- cam_x = x - HALF_W
- cam_y = y - HALF_H
+ cam = pos - HALF_SCREEN_SIZE
 
 # Clamp camera so it never scrolls past the map edges
- max_cam_x = map_pixel_w - SCREEN_W
- max_cam_y = map_pixel_h - SCREEN_H
+ max_cam = Vector2(map_pixel_w, map_pixel_h) - SCREEN
 
- if cam_x < 0:
-  cam_x = 0
- if cam_x > max_cam_x:
-  cam_x = max_cam_x
- if cam_y < 0:
-  cam_y = 0
- if cam_y > max_cam_y:
-  cam_y = max_cam_y
+ if cam.x < 0:
+  cam.x = 0
+ if cam.x > max_cam.x:
+  cam.x = max_cam.x
+ if cam.y < 0:
+  cam.y = 0
+ if cam.y > max_cam.y:
+  cam.y = max_cam.y
 
- map(int((cam_x/speed)/8), int((cam_y/speed)/8), sx=-(cam_x%8), sy=-(cam_y%8))
+ map(int((cam.x/speed)/8), int((cam.y/speed)/8), sx=-(cam.x%8), sy=-(cam.y%8))
  for mob in mobs:
-  mob.draw((cam_x, cam_y))
-  mob.loop((x,y))
+  mob.draw(cam)
+  mob.loop(pos)
  display_lives()
  if inventmen == True:
   cls(15)
-  map(int((x/speed)/8), int((y/speed)/8))
+  map(int((pos.x/speed)/8), int((pos.y/speed)/8))
 
   inventWidth = 15
   inventHeight = 17
@@ -483,22 +550,22 @@ def TIC():
 
   if inventorySellection[1] < 0:
    inventorySellection[1] = len(inventoryLayout) - 1
- elif placing((x - cam_x, y - cam_y), (x,y)) == True:
+ elif placing(pos-cam, pos) == True:
   pass
  else:
 
   if btn(0): 
-   if mget(int(x / 8), int((y-1) / 8)) in walkable_blocks and mget(int((x+7) / 8), int((y-1) / 8)) in walkable_blocks:
-    y -= 1
+   if mget(int(pos.x / 8), int((pos.y-1) / 8)) in walkable_blocks and mget(int((pos.x+7) / 8), int((pos.y-1) / 8)) in walkable_blocks:
+    pos.y -= 1
   if btn(1):
-   if mget(int(x / 8), int((y+8) / 8)) in walkable_blocks and mget(int((x+7) / 8), int((y+8) / 8)) in walkable_blocks:
-    y += 1
+   if mget(int(pos.x / 8), int((pos.y+8) / 8)) in walkable_blocks and mget(int((pos.x+7) / 8), int((pos.y+8) / 8)) in walkable_blocks:
+    pos.y += 1
   if btn(2):
-   if mget(int((x-1) / 8), int((y) / 8)) in walkable_blocks and mget(int((x-1) / 8), int((y+7) / 8)) in walkable_blocks:
-    x -= 1
+   if mget(int((pos.x-1) / 8), int((pos.y) / 8)) in walkable_blocks and mget(int((pos.x-1) / 8), int((pos.y+7) / 8)) in walkable_blocks:
+    pos.x -= 1
   if btn(3):
-   if mget(int((x+8) / 8), int((y) / 8)) in walkable_blocks and mget(int((x+8) / 8), int((y+7) / 8)) in walkable_blocks:
-    x += 1
+   if mget(int((pos.x+8) / 8), int((pos.y) / 8)) in walkable_blocks and mget(int((pos.x+8) / 8), int((pos.y+7) / 8)) in walkable_blocks:
+    pos.x += 1
 
 
 
@@ -506,7 +573,7 @@ def TIC():
 
 
 # 4. Render sprite (centered normally, but moves to the edge when near map borders)
-  spr(256, x - cam_x, y - cam_y, colorkey=0)
+  spr(256, pos.x - cam.x, pos.y - cam.y, colorkey=0)
   t += 1
 
 
