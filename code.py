@@ -166,7 +166,7 @@ class Mob:
   global playerCurrentHealth
   self.damageTimer -= 1
   if self.damageTimer < 0:
-   if abs(self.currentPos - playerPos) < 8:
+   if abs((playerPos - self.currentPos).x) < 8 and abs((playerPos - self.currentPos).y) < 8:
     playerCurrentHealth -= self.damage
     self.damageTimer = self.damageTimerMax
 
