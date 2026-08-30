@@ -1,12 +1,14 @@
-name: Build and Host TIC-80 Game
+name: Build, Host, and Release TIC-80 Game
 
 on:
   push:
     branches:
       - main # Or your default branch
+    tags:
+      - 'v*' # Trigger releases on version tags like v1.0.0
 
 permissions:
-  contents: read
+  contents: write # Required for creating GitHub Releases
   pages: write
   id-token: write
 
@@ -53,8 +55,6 @@ jobs:
           SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export win & export linux & export mac & exit" < /dev/null
           
           # Bundle native outputs into zip archives inside the dist downloads folder
-          # TIC-80 typically outputs standalone files or directories depending on version; 
-          # package them neatly if they are generated locally.
           zip -r dist/downloads/game-windows.zip *win* || true
           zip -r dist/downloads/game-linux.zip *linux* || true
           zip -r dist/downloads/game-mac.zip *mac* || true
@@ -62,7 +62,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Artifact
+      - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
@@ -70,3 +70,13 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Create GitHub Release & Upload Binaries
+        uses: softprops/action-gh-release@v3
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/downloads/game-windows.zip
+            dist/downloads/game-linux.zip
+            dist/downloads/game-mac.zip
+          generate_release_notes: true
