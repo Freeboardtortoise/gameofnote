@@ -37,21 +37,27 @@ jobs:
 
       - name: Download and Install TIC-80
         run: |
-          # Fetch the latest .deb release package from GitHub API
           RELEASE_URL=$(curl -s https://api.github.com/repos/nesbox/TIC-80/releases/latest | grep "browser_download_url.*linux.deb" | cut -d '"' -f 4)
-          
-          # Download and install via dpkg
           curl -L -o tic80.deb "$RELEASE_URL"
           sudo dpkg -i tic80.deb || sudo apt-get install -f -y
 
-      - name: Compile Cartridge to HTML
+      - name: Compile Game Builds
         run: |
-          mkdir -p dist
-          # Run export command
-          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export html standalone=1 & exit" < /dev/null
+          mkdir -p dist/downloads
           
-          # Unzip the exported web package into the dist folder
+          # Export Web/HTML version for GitHub Pages
+          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export html standalone=1 & exit" < /dev/null
           unzip standalone.zip -d dist
+
+          # Export Desktop native runtimes (Windows, Linux, macOS)
+          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export win & export linux & export mac & exit" < /dev/null
+          
+          # Bundle native outputs into zip archives inside the dist downloads folder
+          # TIC-80 typically outputs standalone files or directories depending on version; 
+          # package them neatly if they are generated locally.
+          zip -r dist/downloads/game-windows.zip *win* || true
+          zip -r dist/downloads/game-linux.zip *linux* || true
+          zip -r dist/downloads/game-mac.zip *mac* || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
