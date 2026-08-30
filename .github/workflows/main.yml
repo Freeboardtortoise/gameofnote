@@ -3,12 +3,12 @@ name: Build, Host, and Release TIC-80 Game
 on:
   push:
     branches:
-      - main # Or your default branch
+      - main
     tags:
-      - 'v*' # Trigger releases on version tags like v1.0.0
+      - 'v*'
 
 permissions:
-  contents: write # Required for creating GitHub Releases
+  contents: write
   pages: write
   id-token: write
 
@@ -47,17 +47,20 @@ jobs:
         run: |
           mkdir -p dist/downloads
           
-          # Export Web/HTML version for GitHub Pages
+          # 1. Export Web/HTML version
           SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export html standalone=1 & exit" < /dev/null
           unzip standalone.zip -d dist
 
-          # Export Desktop native runtimes (Windows, Linux, macOS)
-          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export win & export linux & export mac & exit" < /dev/null
-          
-          # Bundle native outputs into zip archives inside the dist downloads folder
-          zip -r dist/downloads/game-windows.zip *win* || true
-          zip -r dist/downloads/game-linux.zip *linux* || true
-          zip -r dist/downloads/game-mac.zip *mac* || true
+          # 2. Export Native builds separately (TIC-80's CLI parser expects individual export commands)
+          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export win game.exe & exit" < /dev/null
+          zip dist/downloads/game-windows.zip game.exe
+
+          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.py & import code code.py & export linux game-linux & exit" < /dev/null || \
+          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export linux game-linux & exit" < /dev/null
+          zip dist/downloads/game-linux.zip game-linux
+
+          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export mac game-mac & exit" < /dev/null
+          zip dist/downloads/game-mac.zip game-mac
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
