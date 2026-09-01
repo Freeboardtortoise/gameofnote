@@ -349,11 +349,12 @@ def generate_world(seed):
    mset(x, y, placeSprites["grass"])
  random.seed(seed)
 
- offset_1 = Vector2(random.uniform(0, 100), random.uniform(0,100))
- offset_2 = Vector2(random.uniform(0, 100), random.uniform(0,100))
+ offset_1 = Vector2(random.random() * 100.0, random.random() * 100.0)
+ offset_2 = Vector2(random.random() * 100.0, random.random() * 100.0)
 
- forrestoffset_1 = Vector2(random.uniform(0, 100), random.uniform(0,100))
- forrestoffset_2 = Vector2(random.uniform(0, 100), random.uniform(0,100))
+ forrestoffset_1 = Vector2(random.random() * 100.0, random.random() * 100.0)
+ forrestoffset_2 = Vector2(random.random() * 100.0, random.random() * 100.0)
+
 
  frequency = 0.04
  treeRandomise = 2
@@ -411,7 +412,7 @@ def display_lives():
  for i in range(full_hearts):
   spr(385, i * 9 + offset, row, colorkey=0)
 
- if playerCurrentHealth % 10 >= 5:
+ if int(playerCurrentHealth) % 10 >= 5:
   spr(384, full_hearts * 9 + offset, row, colorkey=0)
 
 def DeathScreen():
