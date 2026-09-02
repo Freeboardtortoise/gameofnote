@@ -168,12 +168,12 @@ class Mob:
  
  def pathfinding(self, move):
   pos = self.currentPos + move
-  if mget(int(pos.x / 8), int(pos.y / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((pos.y) / 8)) not in walkable_blocks or mget(int((pos.x) / 8), int((pos.y+7) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((pos.y+7) / 8)) not in walkable_blocks:
-   # try and move only up and down
-   if  mget(int((self.currentPos.x / 8)), int((pos.y+7) / 8)) not in walkable_blocks or mget(int((self.currentPos.x+7) / 8), int((pos.y+7) / 8)) not in walkable_blocks:
-    move.x = 0
-   if mget(int(pos.x / 8), int((self.currentPos.x) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((self.currentPos.x) / 8)) not in walkable_blocks : 
-    move.y = 0
+  # try and move only up and down
+  # swop the pos and currentPos for both the x and y statements... they seem to be backwards... currentPos -> pos and pos ->currentPos
+  if mget(int((pos.x) / 8), int((self.currentPos.y+7) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((self.currentPos.y+7) / 8)) not in walkable_blocks or mget(int((pos.x) / 8), int((self.currentPos.y) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((self.currentPos.y) / 8)) not in walkable_blocks:
+   move.x = 0
+  if mget(int(self.currentPos.x / 8), int((pos.y) / 8)) not in walkable_blocks or mget(int((self.currentPos.x+7) / 8), int((pos.y) / 8)) not in walkable_blocks or mget(int(self.currentPos.x / 8), int((pos.y+7) / 8)) not in walkable_blocks or mget(int((self.currentPos.x+7) / 8), int((pos.y+7) / 8)) not in walkable_blocks : 
+   move.y = 0
 
   # do the actual moving
   self.currentPos +=  move
