@@ -74,6 +74,21 @@ class Vector2:
 
 
 
+
+class State_Machine:
+ def __init__(self):
+  self.inventory = False
+  self.menu = False
+  self.playing = False
+  self.start = False
+  # rest of the things
+ def set(self, state):
+  self.__init__()
+  setattr(self, state, True)
+ def get(self, state):
+  return getattr(self, state)
+
+
 SCREEN_SIZE = (240, 136)
 
 t=0
@@ -423,6 +438,113 @@ def DeathScreen():
  exit()
 
 
+def playerMovement():
+ global pos, walkable_blocks
+ if btn(0): 
+  if mget(int(pos.x / 8), int((pos.y-1) / 8)) in walkable_blocks and mget(int((pos.x+7) / 8), int((pos.y-1) / 8)) in walkable_blocks:
+   pos.y -= 1
+ if btn(1):
+  if mget(int(pos.x / 8), int((pos.y+8) / 8)) in walkable_blocks and mget(int((pos.x+7) / 8), int((pos.y+8) / 8)) in walkable_blocks:
+   pos.y += 1
+ if btn(2):
+  if mget(int((pos.x-1) / 8), int((pos.y) / 8)) in walkable_blocks and mget(int((pos.x-1) / 8), int((pos.y+7) / 8)) in walkable_blocks:
+   pos.x -= 1
+ if btn(3):
+  if mget(int((pos.x+8) / 8), int((pos.y) / 8)) in walkable_blocks and mget(int((pos.x+8) / 8), int((pos.y+7) / 8)) in walkable_blocks:
+   pos.x += 1
+
+def inventory_main():
+ global inventory, inventoryLayout, inventbtnPresses
+ global invent, inventmen, cBlock, walkable_blocks
+ global state
+ cls(15)
+ map(int((pos.x/speed)/8), int((pos.y/speed)/8))
+
+ inventWidth = 15
+ inventHeight = 17
+
+ for iy in range(inventHeight):
+  for ix in range(inventWidth):
+   if iy == 0:
+    if ix == 0:
+     sprite  = 133
+    elif ix == inventWidth-1:
+     sprite = 135
+    else:
+     sprite = 134
+   elif iy == inventHeight-1:
+    if ix == 0:
+     sprite = 165
+    elif ix == inventWidth-1:
+     sprite = 167
+    else:
+     sprite = 166
+   elif ix == 0:
+    sprite = 149
+   elif ix == inventWidth-1:
+    sprite = 151
+   else:
+    sprite = 150
+   spr(sprite, (240-inventWidth*8) + ix*8, iy*8)
+
+ # doing the layout
+ for iy in range(len(inventoryLayout)):
+  for ix in range(len(inventoryLayout[0])):
+   spr(sprites[inventoryLayout[iy][ix]], ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
+   if inventorySellection == [ix,iy]:
+    spr(102,  ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
+   else:
+    spr(101,  ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
+ if btn(0): inventbtnPresses[0] = True
+ if btn(1): inventbtnPresses[1] = True 
+ if btn(2): inventbtnPresses[2] = True
+ if btn(3): inventbtnPresses[3] = True
+ if btn(4):
+  cBlock = inventoryLayout[inventorySellection[1]][inventorySellection[0]]
+  state.set("playing")
+ if inventbtnPresses[0] == True and btn(0) == False:
+  inventorySellection[1] -= 1
+  inventbtnPresses[0] = False
+
+ if inventbtnPresses[1] == True and btn(1) == False:
+  inventorySellection[1] += 1
+  inventbtnPresses[1] = False
+
+ if inventbtnPresses[2] == True and btn(2) == False:
+  inventorySellection[0] -= 1
+  inventbtnPresses[2] = False
+
+ if inventbtnPresses[3] == True and btn(3) == False:
+  inventorySellection[0] += 1
+  inventbtnPresses[3] = False
+
+ #round the output
+ inventorySellection[0] %= len(inventoryLayout[0])
+ inventorySellection[1] %= len(inventoryLayout)
+
+ if inventorySellection[0] < 0:
+  inventorySellection[0] = len(inventoryLayout[0]) - 1
+
+ if inventorySellection[1] < 0:
+  inventorySellection[1] = len(inventoryLayout) - 1
+
+tempCam = Vector2(0,0)
+def start():
+ global state
+ global tempCam
+ cam = tempCam
+ speed = 2
+ cls(15)
+ map(int((cam.x/speed)/8), int((cam.y/speed)/8), sx=-(int(cam.x/speed)%8), sy=-(int(cam.y/speed)%8))
+ spr(224, 10,10, colorkey=0, w=11,h=2, scale=2)
+ print("Press A to start", 100,100,color=12)
+ if btn(4) == True:
+  state.set("playing")
+ tempCam += Vector2(1, 1)
+
+
+state = State_Machine()
+state.set("start")
 def TIC():
  global t
  global pos
@@ -431,154 +553,73 @@ def TIC():
  global counter
  global buttonDown, buttonUp, buttonRight, buttonLeft
  global mobs
+ global state
  if len(mobs) < 10:
   mobs.append(Mob(Vector2(random.randint(0,SCREEN_SIZE[0]*8),random.randint(0, SCREEN_SIZE[1]*8)), 100, 0.5, 0.5, True, 277, 2, 100, True, 10))
  if playerCurrentHealth <= 0:
   DeathScreen()
 
+ if state.get("start"):
+  start()
+ else:
+  if len(mobs) < 10:
+   mobs.append(Mob(Vector2(random.randint(0,SCREEN_SIZE[0]*8),random.randint(0, SCREEN_SIZE[1]*8)), 100, 0.5, 0.5, True, 277, 2, 100, True, 10))
+  if playerCurrentHealth <= 0:
+   DeathScreen()
 
- SCREEN_W = 240
- SCREEN_H = 136
- SCREEN = Vector2(SCREEN_W, SCREEN_H)
- HALF_W = SCREEN_W // 2
- HALF_H = SCREEN_H // 2
- HALF_SCREEN_SIZE = SCREEN // 2
+
+  SCREEN_W = 240
+  SCREEN_H = 136
+  SCREEN = Vector2(SCREEN_W, SCREEN_H)
+  HALF_W = SCREEN_W // 2
+  HALF_H = SCREEN_H // 2
+  HALF_SCREEN_SIZE = SCREEN // 2
 
 # Total map size in pixels
- map_pixel_w = SCREEN_SIZE[0] * 8
- map_pixel_h = SCREEN_SIZE[1] * 8
+  map_pixel_w = SCREEN_SIZE[0] * 8
+  map_pixel_h = SCREEN_SIZE[1] * 8
 
- cls(15)
+  cls(15)
 
 # 1. Keep player (x, y) strictly within map boundaries
- if pos.x < 0:
-  pos.x = 0
- if pos.y < 0:
-  pos.y = 0
- if pos.x > map_pixel_w:
-  pos.x = map_pixel_w
- if pos.y > map_pixel_h:
-  pos.y = map_pixel_h
+  if pos.x < 0:
+   pos.x = 0
+  if pos.y < 0:
+   pos.y = 0
+  if pos.x > map_pixel_w:
+   pos.x = map_pixel_w
+  if pos.y > map_pixel_h:
+   pos.y = map_pixel_h
 
 # 2. Calculate camera position centered on the player
- cam = pos - HALF_SCREEN_SIZE
+  cam = pos - HALF_SCREEN_SIZE
 
 # Clamp camera so it never scrolls past the map edges
- max_cam = Vector2(map_pixel_w, map_pixel_h) - SCREEN
+  max_cam = Vector2(map_pixel_w, map_pixel_h) - SCREEN
 
- if cam.x < 0:
-  cam.x = 0
- if cam.x > max_cam.x:
-  cam.x = max_cam.x
- if cam.y < 0:
-  cam.y = 0
- if cam.y > max_cam.y:
-  cam.y = max_cam.y
+  if cam.x < 0:
+   cam.x = 0
+  if cam.x > max_cam.x:
+   cam.x = max_cam.x
+  if cam.y < 0:
+   cam.y = 0
+  if cam.y > max_cam.y:
+   cam.y = max_cam.y
 
- map(int((cam.x/speed)/8), int((cam.y/speed)/8), sx=-(cam.x%8), sy=-(cam.y%8))
- for mob in mobs:
-  mob.draw(cam)
-  mob.loop(pos)
- display_lives()
- if inventmen == True:
-  cls(15)
-  map(int((pos.x/speed)/8), int((pos.y/speed)/8))
-
-  inventWidth = 15
-  inventHeight = 17
-
-  for iy in range(inventHeight):
-   for ix in range(inventWidth):
-    if iy == 0:
-     if ix == 0:
-      sprite  = 133
-     elif ix == inventWidth-1:
-      sprite = 135
-     else:
-      sprite = 134
-    elif iy == inventHeight-1:
-     if ix == 0:
-      sprite = 165
-     elif ix == inventWidth-1:
-      sprite = 167
-     else:
-      sprite = 166
-    elif ix == 0:
-     sprite = 149
-    elif ix == inventWidth-1:
-     sprite = 151
-    else:
-     sprite = 150
-    spr(sprite, (240-inventWidth*8) + ix*8, iy*8)
-
-  # doing the layout
-  for iy in range(len(inventoryLayout)):
-   for ix in range(len(inventoryLayout[0])):
-    spr(sprites[inventoryLayout[iy][ix]], ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
-    if inventorySellection == [ix,iy]:
-     spr(102,  ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
-    else:
-     spr(101,  ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
-  if btn(0): inventbtnPresses[0] = True
-  if btn(1): inventbtnPresses[1] = True 
-  if btn(2): inventbtnPresses[2] = True
-  if btn(3): inventbtnPresses[3] = True
-  if btn(4):
-   cBlock = inventoryLayout[inventorySellection[1]][inventorySellection[0]]
-   inventmen = False
-  if inventbtnPresses[0] == True and btn(0) == False:
-   inventorySellection[1] -= 1
-   inventbtnPresses[0] = False
-
-  if inventbtnPresses[1] == True and btn(1) == False:
-   inventorySellection[1] += 1
-   inventbtnPresses[1] = False
-
-  if inventbtnPresses[2] == True and btn(2) == False:
-   inventorySellection[0] -= 1
-   inventbtnPresses[2] = False
-
-  if inventbtnPresses[3] == True and btn(3) == False:
-   inventorySellection[0] += 1
-   inventbtnPresses[3] = False
-
-  #round the output
-  inventorySellection[0] %= len(inventoryLayout[0])
-  inventorySellection[1] %= len(inventoryLayout)
-
-  if inventorySellection[0] < 0:
-   inventorySellection[0] = len(inventoryLayout[0]) - 1
-
-  if inventorySellection[1] < 0:
-   inventorySellection[1] = len(inventoryLayout) - 1
- elif placing(pos-cam, pos) == True:
-  pass
- else:
-
-  if btn(0): 
-   if mget(int(pos.x / 8), int((pos.y-1) / 8)) in walkable_blocks and mget(int((pos.x+7) / 8), int((pos.y-1) / 8)) in walkable_blocks:
-    pos.y -= 1
-  if btn(1):
-   if mget(int(pos.x / 8), int((pos.y+8) / 8)) in walkable_blocks and mget(int((pos.x+7) / 8), int((pos.y+8) / 8)) in walkable_blocks:
-    pos.y += 1
-  if btn(2):
-   if mget(int((pos.x-1) / 8), int((pos.y) / 8)) in walkable_blocks and mget(int((pos.x-1) / 8), int((pos.y+7) / 8)) in walkable_blocks:
-    pos.x -= 1
-  if btn(3):
-   if mget(int((pos.x+8) / 8), int((pos.y) / 8)) in walkable_blocks and mget(int((pos.x+8) / 8), int((pos.y+7) / 8)) in walkable_blocks:
-    pos.x += 1
-
-
-
-# 3. Render map using the camera coordinates
-
-
+  map(int((cam.x/speed)/8), int((cam.y/speed)/8), sx=-(cam.x%8), sy=-(cam.y%8))
+  for mob in mobs:
+   mob.draw(cam)
+   mob.loop(pos)
+  display_lives()
+  if state.get("inventory"):
+   inventory_main()
+  elif placing(pos-cam, pos) == True:
+   pass
+  elif state.get("playing"):
+   playerMovement()
+  
 # 4. Render sprite (centered normally, but moves to the edge when near map borders)
   spr(256, pos.x - cam.x, pos.y - cam.y, colorkey=0)
   t += 1
-
-
-
-
   if btn(5):
-   inventmen = True
+   state.set("inventory")
