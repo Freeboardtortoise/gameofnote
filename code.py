@@ -98,27 +98,40 @@ invent = 1
 inventmen = False
 inventbtnPresses = [False, False, False, False]
 
-inventory = {"grass": 10, "planks": 10, "stone": 10, "leaves": 10, "logs": 2, "chest": 1, "":0, "stone pickaxe":1}
+inventory = {"grass": 10, "planks": 10, "stone": 10, "leaves": 10, "logs": 2, "chest": 1, "":0, "stone pickaxe":1, "iron ingot": 3}
 inventoryLayout = [["grass", "planks", "stone","leaves","logs",""],
-                   ["chest","stone pickaxe","","","",""],
+                   ["chest","stone pickaxe","iron ingot","","",""],
                    ["","","","","",""],
                    ["","","","","",""],
                    ["","","","","",""],
                    ["","","","","",""]]
-sprites = {"grass":103, "planks":104, "":150, "stone":105, "leaves": 4, "logs": 5, "chest": 18, "dark stone":20,
+sprites = {"grass":2, "planks":101, "":150, "stone":3, "leaves": 4, "logs": 5, "chest": 18, "dark stone":20,
            "stone pickaxe":320, "iron pickaxe": 321, "gold pickaxe": 322, "diamond pickaxe": 323,
            "stone sword": 336, "iron sword": 336, "gold sword": 337, "diamond sword": 338,
            "stone spear": 352, "iron spear": 337, "gold spear": 338, "diamond spear": 339,
-           "stone axe": 368, "iron axe":369, "gold axe":370, "diamond axe": 371}
+           "stone axe": 368, "iron axe":369, "gold axe":370, "diamond axe": 371,
+           # ores
+           "iron ore": 22, "gold ore": 23, "diamond ore": 24,
+           "iron ingot": 38, "gold ingot": 39, "diamond peice": 40}
+UNDERGROUND = ["stone", "darkstone", "gold ore", "iron ore", "diamond ore"]
+ORES = ["iron ore", "gold ore", "diamond ore"]
+INVENTORY_ORES = ["iron ingot", "gold ingot", "diamond peice"]
+ORES_TO_INVENTORY = {"iron ore":"iron ingot", "gold ore": "gold ingot", "diamond ore": "diamond peice"}
+ORES_VEIN_SIZE = {"iron ore": 4, "gold ore": 3, "diamond ore": 2}
 nonPlacables = ["stone pickaxe", "stone sword", "stone axe", "stone spear",
                 "iron pickaxe", " iron sword", "iron axe", "iron spear",
                 "gold pickaxe", "gold sword", "gold axe", "gold spear",
-                "diamond pickaxe", "diamond sword", "diamond axe", "diamond spear"]
+                "diamond pickaxe", "diamond sword", "diamond axe", "diamond spear",
+                ### ores and ingots
+                "iron ingot", "gold ingot", "diamond peice"]
 breaking_tools = {"stone pickaxe":1, "iron pickaxe": 2, "gold pickaxe": 4, "diamond pickaxe": 5}
 placeSprites = {"grass":2, "planks":1, "stone":3, "": 0, "leaves": 4, "logs": 5, "chest": 18, "dark stone":20}
 bottomBlocks = ["dark stone", "grass"]
 inventorySellection = [0,0]
 cBlock = ""
+def reverse(dictionary):
+    return {value: key for key, value in dictionary.items()}
+
 
 counter = Vector2(0,0)
 speed = 1
@@ -168,12 +181,11 @@ class Mob:
  
  def pathfinding(self, move):
   pos = self.currentPos + move
-  if mget(int(pos.x / 8), int(pos.y / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((pos.y) / 8)) not in walkable_blocks or mget(int((pos.x) / 8), int((pos.y+7) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((pos.y+7) / 8)) not in walkable_blocks:
-   # try and move only up and down
-   if  mget(int((self.currentPos.x / 8)), int((pos.y+7) / 8)) not in walkable_blocks or mget(int((self.currentPos.x+7) / 8), int((pos.y+7) / 8)) not in walkable_blocks:
-    move.x = 0
-   if mget(int(pos.x / 8), int((self.currentPos.x) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((self.currentPos.x) / 8)) not in walkable_blocks : 
-    move.y = 0
+  # try and move only up and down
+  if  mget(int((self.currentPos.x / 8)), int((pos.y+7) / 8)) not in walkable_blocks or mget(int((self.currentPos.x+7) / 8), int((pos.y+7) / 8)) not in walkable_blocks or mget(int((self.currentPos.x / 8)), int((pos.y) / 8)) not in walkable_blocks or mget(int((self.currentPos.x+7) / 8), int((pos.y) / 8)) not in walkable_blocks:
+   move.y = 0
+  if  mget(int((pos.x / 8)), int((self.currentPos.y+7) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((self.currentPos.y+7) / 8)) not in walkable_blocks or mget(int((pos.x / 8)), int((self.currentPos.y) / 8)) not in walkable_blocks or mget(int((pos.x+7) / 8), int((self.currentPos.y) / 8)) not in walkable_blocks:
+   move.x = 0
 
   # do the actual moving
   self.currentPos +=  move
@@ -238,12 +250,15 @@ currentButtonValues = [False, False, False, False]
 MAX_REACH = 4
 def placing(player_pos, true_pos):
  global placingMode, currentDelta, currentButtonValues, nonPlacables, breaking_tools, inventory, bottomBlocksBack
+
+ # showing the amount of blocks left in the top left corner
  spr(120,0,0)
  for i in range(len(str(inventory[cBlock]))-1):
   spr(121,(i)*8,0)
   spr(122,(i+1)*8,0)
  print(str(inventory[cBlock]), x=1, y=1, color=15, fixed=False, scale=1)
- # 5. Placing blocks (using player's exact world position)
+
+ 
  if btn(4):  # Place block
   if placingMode == False:
    currentDelta = Vector2(0,0)
@@ -251,13 +266,21 @@ def placing(player_pos, true_pos):
  if placingMode == True:
   # remember that player_pos is relitive to the screen, not the map
   spr(100, int(player_pos.x/8)*8 + 8 * currentDelta.x,int(player_pos.y/8)*8 +  8 * currentDelta.y, colorkey=0)
-
+  current = mget(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y)
   if btn(4) == False:
    placingMode = False
    if cBlock in nonPlacables:
     if cBlock in breaking_tools:
-     if {value: key for key, value in placeSprites.items()}[mget(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y)] not in bottomBlocks:
-      inventory[{value: key for key, value in placeSprites.items()}[mget(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y)]] += 1
+     if reverse(sprites)[current] in ORES:
+      if ORES_TO_INVENTORY[reverse(sprites)[current]] in inventory:
+       inventory[ORES_TO_INVENTORY[reverse(sprites)[current]]] += 1
+      else:
+       inventory[ORES_TO_INVENTORY[reverse(sprites)[current]]] = 1
+     if reverse(sprites)[current] in UNDERGROUND:
+      mset(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y, placeSprites["dark stone"])
+
+     elif reverse(placeSprites)[mget(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y)] not in bottomBlocks:
+      inventory[reverse(placeSprites)[current]] += 1
       mset(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y, placeSprites["grass"])
 
    else:
@@ -358,7 +381,28 @@ def generate_caves():
     currentPoss += delta
     fill_circle(currentPoss, radius + random.randint(radius-1,radius + 1), 20)
 
+def generate_ores(veinRange, number, ore, radius):
+ starters = []
+ for i in range(number):
+  ## find a starting stone tile
+  testPoint = Vector2(random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1]))
+  if mget(testPoint.x, testPoint.y) == 3 and testPoint not in starters:
+   starters.append(testPoint)
+ 
+ # making the veins
+ for vein in starters:
+  direction = Vector2(random.randint(-2,2), random.randint(-2,2))
+  current = vein.dupl()
+  for i in range(random.randint(veinRange[0], veinRange[1])):
+   fill_circle(current, radius, ore)
+   microMovement = Vector2(random.randint(-1,1), random.randint(-1,1))
+   current += direction + microMovement
+
+   
+
+  
 def generate_world(seed):
+ global ORES, ORES_VEIN_SIZE, sprites
  for y in range(SCREEN_SIZE[1]):
   for x in range (SCREEN_SIZE[0]):
    mset(x, y, placeSprites["grass"])
@@ -408,6 +452,9 @@ def generate_world(seed):
  
  # generating caves
  generate_caves()
+ ## generating ores
+ for ore in ORES:
+  generate_ores([5,10], 10, sprites[ore], ORES_VEIN_SIZE[ore])
  
  
 
