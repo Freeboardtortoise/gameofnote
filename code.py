@@ -113,6 +113,7 @@ sprites = {"grass":2, "planks":101, "":150, "stone":3, "leaves": 4, "logs": 5, "
            # ores
            "iron ore": 22, "gold ore": 23, "diamond ore": 24,
            "iron ingot": 38, "gold ingot": 39, "diamond peice": 40}
+UNDERGROUND = ["stone", "darkstone", "gold ore", "iron ore", "diamond ore"]
 ORES = ["iron ore", "gold ore", "diamond ore"]
 INVENTORY_ORES = ["iron ingot", "gold ingot", "diamond peice"]
 ORES_TO_INVENTORY = {"iron ore":"iron ingot", "gold ore": "gold ingot", "diamond ore": "diamond peice"}
@@ -276,6 +277,9 @@ def placing(player_pos, true_pos):
        inventory[ORES_TO_INVENTORY[reverse(sprites)[current]]] += 1
       else:
        inventory[ORES_TO_INVENTORY[reverse(sprites)[current]]] = 1
+     if reverse(sprites)[current] in UNDERGROUND:
+      mset(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y, placeSprites["dark stone"])
+
      elif reverse(placeSprites)[mget(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y)] not in bottomBlocks:
       inventory[reverse(placeSprites)[current]] += 1
       mset(int(true_pos.x / 8) + currentDelta.x, int(true_pos.y / 8) + currentDelta.y, placeSprites["grass"])
