@@ -253,7 +253,16 @@ stone_map = [
 
 ATTACKING_SPEED = 10
 attacking_timer = ATTACKING_SPEED
-# attacking function
+# shader for remap
+def shader(x,y):
+ t = mget(x,y)
+ orig = t
+ if orig not in walkable_blocks:
+  if mget(x+1, y) not in walkable_blocks and mget(x-1, y) not in walkable_blocks and mget(x, y+1) not in walkable_blocks and mget(x, y-1) not in walkable_blocks:
+   t = 0
+ return (t,x,y)
+    
+#attacking function
 def attacking_check():
  global ATTACKING_SPEED, attacking_timer
  global inventory, WEAPONS, cBlock
@@ -687,7 +696,7 @@ def TIC():
   if cam.y > max_cam.y:
    cam.y = max_cam.y
 
-  map(int((cam.x/speed)/8), int((cam.y/speed)/8), sx=-(cam.x%8), sy=-(cam.y%8))
+  map(int((cam.x/speed)/8), int((cam.y/speed)/8), sx=-(cam.x%8), sy=-(cam.y%8), remap=shader)
   for mob in mobs:
    mob.loop(pos, cam)
   display_lives()
