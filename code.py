@@ -56,13 +56,15 @@ class Vector2:
   else:
    if self.x < other and self.y < other:
     return True
+  return False
  def __gt__(self, other):
   if isinstance(other, Vector2):
-   if self.x > other.x and self.y < other.y:
+   if self.x > other.x and self.y > other.y:
     return True
   else:
    if self.x > other and self.y > other:
     return True
+  return False
 
  def __repr__(self):
   return f"Vector2(x: {self.x},y: {self.y})"
@@ -98,10 +100,10 @@ invent = 1
 inventmen = False
 inventbtnPresses = [False, False, False, False]
 
-inventory = {"grass": 10, "planks": 10, "stone": 10, "leaves": 10, "logs": 2, "chest": 1, "":0, "stone pickaxe":1, "iron ingot": 3}
+inventory = {"grass": 10, "planks": 10, "stone": 10, "leaves": 10, "logs": 2, "chest": 1, "":0, "stone pickaxe":1, "iron ingot": 3, "stone sword": 120}
 inventoryLayout = [["grass", "planks", "stone","leaves","logs",""],
                    ["chest","stone pickaxe","iron ingot","","",""],
-                   ["","","","","",""],
+                   ["","stone sword","","","",""],
                    ["","","","","",""],
                    ["","","","","",""],
                    ["","","","","",""]]
@@ -118,6 +120,9 @@ ORES = ["iron ore", "gold ore", "diamond ore"]
 INVENTORY_ORES = ["iron ingot", "gold ingot", "diamond peice"]
 ORES_TO_INVENTORY = {"iron ore":"iron ingot", "gold ore": "gold ingot", "diamond ore": "diamond peice"}
 ORES_VEIN_SIZE = {"iron ore": 4, "gold ore": 3, "diamond ore": 2}
+WEAPONS = ["stone sword", "iron sword", "gold sword", "diamond sword", "stone spear", "iron spear", "gold spear", "diamond spear"]
+WEAPONS_ATTACK = {"stone sword": 12, "iron sword": 20, "diamond sword": 30, "stone spear": 10, "gold spear": 15, "iron spear": 20, "diamond spear": 40, "gold sword": 23}
+WEAPONS_DURABILITY = {"stone sword": 120, "iron sword": 200, "gold sword": 50, "diamond sword": 300, " stone spear": 50, "iron spear": 100, "gold spear": 25, "diamond spear": 150}
 nonPlacables = ["stone pickaxe", "stone sword", "stone axe", "stone spear",
                 "iron pickaxe", " iron sword", "iron axe", "iron spear",
                 "gold pickaxe", "gold sword", "gold axe", "gold spear",
@@ -154,7 +159,7 @@ class Mob:
 
 
   # variables
-  self.hp = health
+  self.health = health
   self.startPos = startPos.dupl()
   self.hostile = hostile
   self.damage = damage
@@ -232,10 +237,13 @@ class Mob:
    self.direction = Vector2(random.randint(-1,1),random.randint(-1,1))
    self.directionTimer = self.directionTimerTop
 
- def loop(self, playerPos):
-  self.movement(playerPos)
-  if self.hostile:
-   self.damaging(playerPos)
+ def loop(self, playerPos, cam):
+  if self.health >= 1:
+   self.movement(playerPos)
+   if self.hostile:
+    self.damaging(playerPos)
+
+   self.draw(cam)
 
 
 stone_map = [
@@ -243,12 +251,34 @@ stone_map = [
     for y in range(SCREEN_SIZE[1])
 ]
 
+ATTACKING_SPEED = 10
+attacking_timer = ATTACKING_SPEED
+# attacking function
+def attacking_check():
+ global ATTACKING_SPEED, attacking_timer
+ global inventory, WEAPONS, cBlock
+ attacking_timer -= 1
+ if cBlock in WEAPONS:
+  if inventory[cBlock] > 0:
+   if attacking_timer < 0:
+    attacking_timer = ATTACKING_SPEED
+    return True
+ return False
+
+def attack(player_pos, mobs):
+ global WEAPONS_ATTACK, cBlock
+ ATTACKING_RANGE = 5
+ for mob in mobs:
+  if abs(mob.currentPos-player_pos) < Vector2(ATTACKING_RANGE,ATTACKING_RANGE):
+   mob.health -= WEAPONS_ATTACK[cBlock]
+   inventory[cBlock] -= 1
+
 # placing variables
 placingMode = False
 currentDelta = Vector2(0,0)
 currentButtonValues = [False, False, False, False]
 MAX_REACH = 4
-def placing(player_pos, true_pos):
+def placing(player_pos, true_pos, mobs):
  global placingMode, currentDelta, currentButtonValues, nonPlacables, breaking_tools, inventory, bottomBlocksBack
 
  # showing the amount of blocks left in the top left corner
@@ -262,7 +292,11 @@ def placing(player_pos, true_pos):
  if btn(4):  # Place block
   if placingMode == False:
    currentDelta = Vector2(0,0)
-  placingMode = True
+  if cBlock in WEAPONS:
+   if attacking_check():
+    attack(true_pos, mobs)
+  else:
+   placingMode = True
  if placingMode == True:
   # remember that player_pos is relitive to the screen, not the map
   spr(100, int(player_pos.x/8)*8 + 8 * currentDelta.x,int(player_pos.y/8)*8 +  8 * currentDelta.y, colorkey=0)
@@ -655,12 +689,11 @@ def TIC():
 
   map(int((cam.x/speed)/8), int((cam.y/speed)/8), sx=-(cam.x%8), sy=-(cam.y%8))
   for mob in mobs:
-   mob.draw(cam)
-   mob.loop(pos)
+   mob.loop(pos, cam)
   display_lives()
   if state.get("inventory"):
    inventory_main()
-  elif placing(pos-cam, pos) == True:
+  elif placing(pos-cam, pos, mobs) == True:
    pass
   elif state.get("playing"):
    playerMovement()
