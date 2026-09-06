@@ -46,9 +46,11 @@ class Shader:
   orig = t
   if Vector2(x,y) not in self.visable:
    return (0,x,y)
-  if orig not in walkable_blocks:
-   if mget(x+1, y) not in walkable_blocks and mget(x-1, y) not in walkable_blocks and mget(x, y+1) not in walkable_blocks and mget(x, y-1) not in walkable_blocks:
-    t = 0
-  return (t,x,y)
+  else:
+   return (t,x,y)
+  #if orig not in walkable_blocks:
+  # if mget(x+1, y) not in walkable_blocks and mget(x-1, y) not in walkable_blocks and mget(x, y+1) not in walkable_blocks and mget(x, y-1) not in walkable_blocks:
+  #  t = 0
+  #return (t,x,y)
 
 
