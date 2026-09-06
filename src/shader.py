@@ -1,11 +1,22 @@
 # shader for remap
+
+
 class Shader:
  def __init__(self, amount):
   self.x = 0
+  import math
 
-  self.rays = [Vector2(0,1), Vector2(0,-1), Vector2(1,0), Vector2(-1,0), Vector2(1,1), Vector2(-1,1), Vector2(-1,-1), Vector2(1,-1),
-               Vector2(1,2),Vector2(1,-2), Vector2(-1,2), Vector2(-1,-2), Vector2(2,1), Vector2(2,-1), Vector2(-2,1), Vector2(-2,-1)]
+  self.rays = []
 
+  for angle in range(0, 360, 1):
+   rad = math.radians(angle)
+
+   self.rays.append(
+    Vector2(
+     math.cos(rad),
+     math.sin(rad)
+    )
+   )
 
  def calculate(self, playerPos):
   # calculating vision
@@ -16,7 +27,7 @@ class Shader:
   
   for ray in rays:
    currentItteration = 0
-   itterationLimit = 10
+   itterationLimit = 20
    current = playerTile.dupl()
    stillVisable = True
    while stillVisable == True and currentItteration < itterationLimit:
@@ -24,14 +35,10 @@ class Shader:
     current += ray
     if mget(int(current.x), int(current.y)) not in walkable_blocks:
      stillVisable = False
-    self.visable.add(current)
+    self.visable.add(Vector2(int(current.x), int(current.y)))
     # adding a radius
 
-    RAD = 2
-    for y in range (-RAD, RAD):
-     for x in range (-RAD, RAD):
-      curr = Vector2(x,y) + current
-      self.visable.add(curr)
+
 
 
  def shader(self,x,y):

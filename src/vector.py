@@ -62,5 +62,13 @@ class Vector2:
   return Vector2(abs(self.x), abs(self.y))
  def __hash__(self):
   return hash((self.x, self.y))
+ def normalize(self):
+  output = Vector2(self.x,self.y)
+  length = math.sqrt(output.x**2 + output.y**2)
+  if length == 0:
+   return Vector2(0,0)
+  output.x = output.x/length
+  output.y = output.y/length
+  return output
 
 
