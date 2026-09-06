@@ -1,95 +1,5 @@
-# title:   gameofnote
-# author:  game developers, email, etc.
-# desc:    short description
-# site:    website link
-# license: MIT License (change this to your license of choice)
-# version: 0.1
-# script:  python
-# this is a test
-import random
-import math
-import time
 
-# Vector2(0,0)
-# [0,0]
-# Vector2 + Vector2
-# [v1[0] + v2[0], v1[1] + v2[1]]
-class Vector2:
- def __init__(self, x,y):
-   self.x = x
-   self.y = y
- def __add__(self, other):
-  return Vector2(self.x + other.x, self.y + other.y)
- def __sub__(self, other):
-  return Vector2(self.x - other.x, self.y - other.y)
- def __mul__(self, other):
-  if isinstance(other, (Vector2)):
-   return Vector2(self.x * other.x, self.y * other.y)
-  else:
-   return Vector2(self.x * other, self.y * other)
- def __rmul__(self, scaler):
-  return Vector2(self.x * scaler, self.y * scaler)
- def __truediv__(self, scaler):
-  return Vector2(self.x / scaler, self.y / scaler)
- def __floordiv__(self, scaler):
-  return Vector2(self.x // scaler, self.y // scaler)
- def __iadd__(self, other):
-  self.x += other.x
-  self.y += other.y
-  return self
- def __isub__(self, other):
-  self.x -= other.x
-  self.y -= other.y
-  return self
- def __eq__(self,other):
-  if self.x == other.x and self.y == other.y:
-   return True
- def __ne__(self, other):
-  if self.x == other.x and self.y == other.y:
-   return True
-  else:
-   return False
- def __lt__(self, other):
-  if isinstance(other, Vector2):
-   if self.x < other.x and self.y < other.y:
-    return True
-  else:
-   if self.x < other and self.y < other:
-    return True
-  return False
- def __gt__(self, other):
-  if isinstance(other, Vector2):
-   if self.x > other.x and self.y > other.y:
-    return True
-  else:
-   if self.x > other and self.y > other:
-    return True
-  return False
-
- def __repr__(self):
-  return f"Vector2(x: {self.x},y: {self.y})"
- def dupl(self):
-  return Vector2(self.x, self.y)
- def __abs__(self):
-  return Vector2(abs(self.x), abs(self.y))
-
-
-
-
-
-class State_Machine:
- def __init__(self):
-  self.inventory = False
-  self.menu = False
-  self.playing = False
-  self.start = False
-  # rest of the things
- def set(self, state):
-  self.__init__()
-  setattr(self, state, True)
- def get(self, state):
-  return getattr(self, state)
-
+# ===== src/Constants.py =====
 
 SCREEN_SIZE = (240, 136)
 
@@ -134,9 +44,6 @@ placeSprites = {"grass":2, "planks":1, "stone":3, "": 0, "leaves": 4, "logs": 5,
 bottomBlocks = ["dark stone", "grass"]
 inventorySellection = [0,0]
 cBlock = ""
-def reverse(dictionary):
-    return {value: key for key, value in dictionary.items()}
-
 
 counter = Vector2(0,0)
 speed = 1
@@ -144,13 +51,241 @@ walkable_blocks = ["grass", "leaves", "dark stone"]
 walkable_blocks = [placeSprites[block] for block in walkable_blocks]
 bottomBlocksBack = [placeSprites[block] for block in bottomBlocks]
 
-
 #player stuff
 PLAYERMAXHEALTH = 100
 
 
 playerCurrentHealth = PLAYERMAXHEALTH
 
+stone_map = [
+    [False for x in range(SCREEN_SIZE[0])]
+    for y in range(SCREEN_SIZE[1])
+]
+
+
+
+# ===== src/attacking.py =====
+#attacking function
+def attacking_check():
+ global ATTACKING_SPEED, attacking_timer
+ global inventory, WEAPONS, cBlock
+ attacking_timer -= 1
+ if cBlock in WEAPONS:
+  if inventory[cBlock] > 0:
+   if attacking_timer < 0:
+    attacking_timer = ATTACKING_SPEED
+    return True
+ return False
+
+def attack(player_pos, mobs):
+ global WEAPONS_ATTACK, cBlock
+ ATTACKING_RANGE = 5
+ for mob in mobs:
+  if abs(mob.currentPos-player_pos) < Vector2(ATTACKING_RANGE,ATTACKING_RANGE):
+   mob.health -= WEAPONS_ATTACK[cBlock]
+   inventory[cBlock] -= 1
+
+
+
+
+# ===== src/generation.py =====
+
+def generate_caves():
+ wormStarters = []
+ worms = 10
+ # find random stone blocks
+ while len(wormStarters) <  worms:
+  testPoint = Vector2(random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1]))
+  if mget(testPoint.x, testPoint.y) == 3 and testPoint not in wormStarters:
+   wormStarters.append(testPoint)
+ # walking worm by worm
+ worm_steps = 100
+ radius = 3
+ speed = 3
+ directional_speed = 4
+ for worm in wormStarters:
+  radius = random.randint(1,3)
+  currentPoss = worm
+  direction = Vector2(random.randint(-directional_speed,directional_speed), random.randint(-directional_speed,directional_speed))
+  for i in range(worm_steps):
+   delta = Vector2(random.randint(-speed,speed), random.randint(-speed,speed)) + direction
+   if mget(currentPoss.x + delta.x, currentPoss.y + delta.y) == 3:
+    currentPoss += delta
+    fill_circle(currentPoss, radius + random.randint(radius-1,radius + 1), 20)
+
+def generate_ores(veinRange, number, ore, radius):
+ starters = []
+ for i in range(number):
+  ## find a starting stone tile
+  testPoint = Vector2(random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1]))
+  if mget(testPoint.x, testPoint.y) == 3 and testPoint not in starters:
+   starters.append(testPoint)
+ 
+ # making the veins
+ for vein in starters:
+  direction = Vector2(random.randint(-2,2), random.randint(-2,2))
+  current = vein.dupl()
+  for i in range(random.randint(veinRange[0], veinRange[1])):
+   fill_circle(current, radius, ore)
+   microMovement = Vector2(random.randint(-1,1), random.randint(-1,1))
+   current += direction + microMovement
+
+   
+
+  
+def generate_world(seed):
+ global ORES, ORES_VEIN_SIZE, sprites
+ for y in range(SCREEN_SIZE[1]):
+  for x in range (SCREEN_SIZE[0]):
+   mset(x, y, placeSprites["grass"])
+ random.seed(seed)
+
+ offset_1 = Vector2(random.random() * 100.0, random.random() * 100.0)
+ offset_2 = Vector2(random.random() * 100.0, random.random() * 100.0)
+
+ forrestoffset_1 = Vector2(random.random() * 100.0, random.random() * 100.0)
+ forrestoffset_2 = Vector2(random.random() * 100.0, random.random() * 100.0)
+
+
+ frequency = 0.04
+ treeRandomise = 2
+
+ height = Vector2(0,0)
+ for y in range(SCREEN_SIZE[1]):
+  for x in range(240):
+   height = Vector2(x,y) * frequency + offset_1
+
+   heightwave1 = math.sin(height.x) * math.cos(height.y)
+
+   height2 = Vector2(x,y) * frequency * 2.5 + offset_2
+   heightwave2 = math.sin(height2.x) * math.cos(height2.y) * 0.4
+
+   total_wave = heightwave1 + heightwave2
+
+   # forest wave
+   forrest = Vector2(x,y) * frequency + forrestoffset_2
+
+
+   forrestwave1 = math.sin(forrest.x) * math.cos(forrest.y)
+
+   forrest2 = Vector2(x,y) * frequency * 2.5 + forrestoffset_2
+   forrestwave2 = math.sin(forrest2.x) * math.cos(forrest2.y) * 0.4
+   total_forrestWave = forrestwave1 + forrestwave2
+
+
+   if total_wave > 0.2:
+    mset(x, y, placeSprites["stone"])
+    stone_map[y][x] = True
+   else:
+    
+    if total_forrestWave > 0.2:
+     if x * random.randint(1, treeRandomise) % 4 == 0 and y * random.randint(1, treeRandomise) % 4 == 0:
+      generate_tree(Vector2(x,y))
+ 
+ # generating caves
+ generate_caves()
+ ## generating ores
+ for ore in ORES:
+  generate_ores([5,10], 10, sprites[ore], ORES_VEIN_SIZE[ore])
+
+
+
+# ===== src/inventory.py =====
+def inventory_main():
+ global inventory, inventoryLayout, inventbtnPresses
+ global invent, inventmen, cBlock, walkable_blocks
+ global state
+ cls(15)
+ map(int((pos.x/speed)/8), int((pos.y/speed)/8))
+
+ inventWidth = 15
+ inventHeight = 17
+
+ for iy in range(inventHeight):
+  for ix in range(inventWidth):
+   if iy == 0:
+    if ix == 0:
+     sprite  = 133
+    elif ix == inventWidth-1:
+     sprite = 135
+    else:
+     sprite = 134
+   elif iy == inventHeight-1:
+    if ix == 0:
+     sprite = 165
+    elif ix == inventWidth-1:
+     sprite = 167
+    else:
+     sprite = 166
+   elif ix == 0:
+    sprite = 149
+   elif ix == inventWidth-1:
+    sprite = 151
+   else:
+    sprite = 150
+   spr(sprite, (240-inventWidth*8) + ix*8, iy*8)
+
+ # doing the layout
+ for iy in range(len(inventoryLayout)):
+  for ix in range(len(inventoryLayout[0])):
+   spr(sprites[inventoryLayout[iy][ix]], ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
+   if inventorySellection == [ix,iy]:
+    spr(102,  ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
+   else:
+    spr(101,  ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
+ if btn(0): inventbtnPresses[0] = True
+ if btn(1): inventbtnPresses[1] = True 
+ if btn(2): inventbtnPresses[2] = True
+ if btn(3): inventbtnPresses[3] = True
+ if btn(4):
+  cBlock = inventoryLayout[inventorySellection[1]][inventorySellection[0]]
+  state.set("playing")
+ if inventbtnPresses[0] == True and btn(0) == False:
+  inventorySellection[1] -= 1
+  inventbtnPresses[0] = False
+
+ if inventbtnPresses[1] == True and btn(1) == False:
+  inventorySellection[1] += 1
+  inventbtnPresses[1] = False
+
+ if inventbtnPresses[2] == True and btn(2) == False:
+  inventorySellection[0] -= 1
+  inventbtnPresses[2] = False
+
+ if inventbtnPresses[3] == True and btn(3) == False:
+  inventorySellection[0] += 1
+  inventbtnPresses[3] = False
+
+ #round the output
+ inventorySellection[0] %= len(inventoryLayout[0])
+ inventorySellection[1] %= len(inventoryLayout)
+
+ if inventorySellection[0] < 0:
+  inventorySellection[0] = len(inventoryLayout[0]) - 1
+
+ if inventorySellection[1] < 0:
+  inventorySellection[1] = len(inventoryLayout) - 1
+
+
+
+# ===== src/lives.py =====
+def display_lives():
+ global playerCurrentHealth
+
+ offset = 20
+ row = 0
+
+ full_hearts = int(playerCurrentHealth / 10)
+
+ for i in range(full_hearts):
+  spr(385, i * 9 + offset, row, colorkey=0)
+
+ if int(playerCurrentHealth) % 10 >= 5:
+  spr(384, full_hearts * 9 + offset, row, colorkey=0)
+
+
+
+# ===== src/mobs.py =====
 class Mob:
  def __init__(self, startPos, health, speed, damage, hostile, sprite, spriteSize, attack_range, collide, attackSpeed):
   # constants
@@ -246,42 +381,8 @@ class Mob:
    self.draw(cam)
 
 
-stone_map = [
-    [False for x in range(SCREEN_SIZE[0])]
-    for y in range(SCREEN_SIZE[1])
-]
 
-ATTACKING_SPEED = 10
-attacking_timer = ATTACKING_SPEED
-# shader for remap
-def shader(x,y):
- t = mget(x,y)
- orig = t
- if orig not in walkable_blocks:
-  if mget(x+1, y) not in walkable_blocks and mget(x-1, y) not in walkable_blocks and mget(x, y+1) not in walkable_blocks and mget(x, y-1) not in walkable_blocks:
-   t = 0
- return (t,x,y)
-    
-#attacking function
-def attacking_check():
- global ATTACKING_SPEED, attacking_timer
- global inventory, WEAPONS, cBlock
- attacking_timer -= 1
- if cBlock in WEAPONS:
-  if inventory[cBlock] > 0:
-   if attacking_timer < 0:
-    attacking_timer = ATTACKING_SPEED
-    return True
- return False
-
-def attack(player_pos, mobs):
- global WEAPONS_ATTACK, cBlock
- ATTACKING_RANGE = 5
- for mob in mobs:
-  if abs(mob.currentPos-player_pos) < Vector2(ATTACKING_RANGE,ATTACKING_RANGE):
-   mob.health -= WEAPONS_ATTACK[cBlock]
-   inventory[cBlock] -= 1
-
+# ===== src/placing.py =====
 # placing variables
 placingMode = False
 currentDelta = Vector2(0,0)
@@ -401,133 +502,9 @@ def fill_circle(center, radius, tile):
    if dx * dx + dy * dy <= radius * radius:
     mset(x, y, tile)
 
-def generate_caves():
- wormStarters = []
- worms = 10
- # find random stone blocks
- while len(wormStarters) <  worms:
-  testPoint = Vector2(random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1]))
-  if mget(testPoint.x, testPoint.y) == 3 and testPoint not in wormStarters:
-   wormStarters.append(testPoint)
- # walking worm by worm
- worm_steps = 100
- radius = 3
- speed = 3
- directional_speed = 4
- for worm in wormStarters:
-  radius = random.randint(1,3)
-  currentPoss = worm
-  direction = Vector2(random.randint(-directional_speed,directional_speed), random.randint(-directional_speed,directional_speed))
-  for i in range(worm_steps):
-   delta = Vector2(random.randint(-speed,speed), random.randint(-speed,speed)) + direction
-   if mget(currentPoss.x + delta.x, currentPoss.y + delta.y) == 3:
-    currentPoss += delta
-    fill_circle(currentPoss, radius + random.randint(radius-1,radius + 1), 20)
-
-def generate_ores(veinRange, number, ore, radius):
- starters = []
- for i in range(number):
-  ## find a starting stone tile
-  testPoint = Vector2(random.randint(0,SCREEN_SIZE[0]), random.randint(0,SCREEN_SIZE[1]))
-  if mget(testPoint.x, testPoint.y) == 3 and testPoint not in starters:
-   starters.append(testPoint)
- 
- # making the veins
- for vein in starters:
-  direction = Vector2(random.randint(-2,2), random.randint(-2,2))
-  current = vein.dupl()
-  for i in range(random.randint(veinRange[0], veinRange[1])):
-   fill_circle(current, radius, ore)
-   microMovement = Vector2(random.randint(-1,1), random.randint(-1,1))
-   current += direction + microMovement
-
-   
-
-  
-def generate_world(seed):
- global ORES, ORES_VEIN_SIZE, sprites
- for y in range(SCREEN_SIZE[1]):
-  for x in range (SCREEN_SIZE[0]):
-   mset(x, y, placeSprites["grass"])
- random.seed(seed)
-
- offset_1 = Vector2(random.random() * 100.0, random.random() * 100.0)
- offset_2 = Vector2(random.random() * 100.0, random.random() * 100.0)
-
- forrestoffset_1 = Vector2(random.random() * 100.0, random.random() * 100.0)
- forrestoffset_2 = Vector2(random.random() * 100.0, random.random() * 100.0)
 
 
- frequency = 0.04
- treeRandomise = 2
-
- height = Vector2(0,0)
- for y in range(SCREEN_SIZE[1]):
-  for x in range(240):
-   height = Vector2(x,y) * frequency + offset_1
-
-   heightwave1 = math.sin(height.x) * math.cos(height.y)
-
-   height2 = Vector2(x,y) * frequency * 2.5 + offset_2
-   heightwave2 = math.sin(height2.x) * math.cos(height2.y) * 0.4
-
-   total_wave = heightwave1 + heightwave2
-
-   # forest wave
-   forrest = Vector2(x,y) * frequency + forrestoffset_2
-
-
-   forrestwave1 = math.sin(forrest.x) * math.cos(forrest.y)
-
-   forrest2 = Vector2(x,y) * frequency * 2.5 + forrestoffset_2
-   forrestwave2 = math.sin(forrest2.x) * math.cos(forrest2.y) * 0.4
-   total_forrestWave = forrestwave1 + forrestwave2
-
-
-   if total_wave > 0.2:
-    mset(x, y, placeSprites["stone"])
-    stone_map[y][x] = True
-   else:
-    
-    if total_forrestWave > 0.2:
-     if x * random.randint(1, treeRandomise) % 4 == 0 and y * random.randint(1, treeRandomise) % 4 == 0:
-      generate_tree(Vector2(x,y))
- 
- # generating caves
- generate_caves()
- ## generating ores
- for ore in ORES:
-  generate_ores([5,10], 10, sprites[ore], ORES_VEIN_SIZE[ore])
- 
- 
-
-
-generate_world(random.randint(0,1000))
-test = Mob(Vector2(0,0), 100, 0.5, 0.5, True, 277, 2, 100, True, 10)
-mobs = []
-
-def display_lives():
- global playerCurrentHealth
-
- offset = 20
- row = 0
-
- full_hearts = int(playerCurrentHealth / 10)
-
- for i in range(full_hearts):
-  spr(385, i * 9 + offset, row, colorkey=0)
-
- if int(playerCurrentHealth) % 10 >= 5:
-  spr(384, full_hearts * 9 + offset, row, colorkey=0)
-
-def DeathScreen():
- cls(0)
- print(str("You are dead"), x=int(SCREEN_SIZE[0]/2), y=int(SCREEN_SIZE[1]/2), color=15, fixed=False, scale=3)
- print(str("Yes you read that correctly"), x=int(SCREEN_SIZE[0]/2), y=int(SCREEN_SIZE[1]/2)+20, color=15, fixed=False, scale=1)
- time.sleep(10)
- exit()
-
-
+# ===== src/playerMovement.py =====
 def playerMovement():
  global pos, walkable_blocks
  if btn(0): 
@@ -543,81 +520,60 @@ def playerMovement():
   if mget(int((pos.x+8) / 8), int((pos.y) / 8)) in walkable_blocks and mget(int((pos.x+8) / 8), int((pos.y+7) / 8)) in walkable_blocks:
    pos.x += 1
 
-def inventory_main():
- global inventory, inventoryLayout, inventbtnPresses
- global invent, inventmen, cBlock, walkable_blocks
- global state
- cls(15)
- map(int((pos.x/speed)/8), int((pos.y/speed)/8))
 
- inventWidth = 15
- inventHeight = 17
 
- for iy in range(inventHeight):
-  for ix in range(inventWidth):
-   if iy == 0:
-    if ix == 0:
-     sprite  = 133
-    elif ix == inventWidth-1:
-     sprite = 135
-    else:
-     sprite = 134
-   elif iy == inventHeight-1:
-    if ix == 0:
-     sprite = 165
-    elif ix == inventWidth-1:
-     sprite = 167
-    else:
-     sprite = 166
-   elif ix == 0:
-    sprite = 149
-   elif ix == inventWidth-1:
-    sprite = 151
-   else:
-    sprite = 150
-   spr(sprite, (240-inventWidth*8) + ix*8, iy*8)
 
- # doing the layout
- for iy in range(len(inventoryLayout)):
-  for ix in range(len(inventoryLayout[0])):
-   spr(sprites[inventoryLayout[iy][ix]], ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
-   if inventorySellection == [ix,iy]:
-    spr(102,  ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
-   else:
-    spr(101,  ((240-inventWidth*8)+ 16 + 8*ix*2), (0) + 8*iy*2+8, colorkey=0)
- if btn(0): inventbtnPresses[0] = True
- if btn(1): inventbtnPresses[1] = True 
- if btn(2): inventbtnPresses[2] = True
- if btn(3): inventbtnPresses[3] = True
- if btn(4):
-  cBlock = inventoryLayout[inventorySellection[1]][inventorySellection[0]]
-  state.set("playing")
- if inventbtnPresses[0] == True and btn(0) == False:
-  inventorySellection[1] -= 1
-  inventbtnPresses[0] = False
+# ===== src/shader.py =====
+# shader for remap
+class Shader:
+ def __init__(self, amount):
+  self.x = 0
 
- if inventbtnPresses[1] == True and btn(1) == False:
-  inventorySellection[1] += 1
-  inventbtnPresses[1] = False
+  self.rays = [Vector2(0,1), Vector2(0,-1), Vector2(1,0), Vector2(-1,0), Vector2(1,1), Vector2(-1,1), Vector2(-1,-1), Vector2(1,-1),
+               Vector2(1,2),Vector2(1,-2), Vector2(-1,2), Vector2(-1,-2), Vector2(2,1), Vector2(2,-1), Vector2(-2,1), Vector2(-2,-1)]
 
- if inventbtnPresses[2] == True and btn(2) == False:
-  inventorySellection[0] -= 1
-  inventbtnPresses[2] = False
 
- if inventbtnPresses[3] == True and btn(3) == False:
-  inventorySellection[0] += 1
-  inventbtnPresses[3] = False
+ def calculate(self, playerPos):
+  # calculating vision
+  rays = self.rays
+  playerTile = playerPos // 8
+  self.visable = set()
+  self.visable.add(playerTile)
+  
+  for ray in rays:
+   currentItteration = 0
+   itterationLimit = 10
+   current = playerTile.dupl()
+   stillVisable = True
+   while stillVisable == True and currentItteration < itterationLimit:
+    currentItteration += 1
+    current += ray
+    if mget(int(current.x), int(current.y)) not in walkable_blocks:
+     stillVisable = False
+    self.visable.add(current)
+    # adding a radius
 
- #round the output
- inventorySellection[0] %= len(inventoryLayout[0])
- inventorySellection[1] %= len(inventoryLayout)
+    RAD = 2
+    for y in range (-RAD, RAD):
+     for x in range (-RAD, RAD):
+      curr = Vector2(x,y) + current
+      self.visable.add(curr)
 
- if inventorySellection[0] < 0:
-  inventorySellection[0] = len(inventoryLayout[0]) - 1
 
- if inventorySellection[1] < 0:
-  inventorySellection[1] = len(inventoryLayout) - 1
+ def shader(self,x,y):
+  t = mget(x,y)
+  orig = t
+  if Vector2(x,y) not in self.visable:
+   return (0,x,y)
+  if orig not in walkable_blocks:
+   if mget(x+1, y) not in walkable_blocks and mget(x-1, y) not in walkable_blocks and mget(x, y+1) not in walkable_blocks and mget(x, y-1) not in walkable_blocks:
+    t = 0
+  return (t,x,y)
 
+
+
+
+# ===== src/startScreen.py =====
 tempCam = Vector2(0,0)
 def start():
  global state
@@ -633,8 +589,131 @@ def start():
  tempCam += Vector2(1, 1)
 
 
+
+# ===== src/stateMachine.py =====
+class State_Machine:
+ def __init__(self):
+  self.inventory = False
+  self.menu = False
+  self.playing = False
+  self.start = False
+  # rest of the things
+ def set(self, state):
+  self.__init__()
+  setattr(self, state, True)
+ def get(self, state):
+  return getattr(self, state)
+
+
+
+
+# ===== src/vector.py =====
+# Vector2(0,0)
+# [0,0]
+# Vector2 + Vector2
+# [v1[0] + v2[0], v1[1] + v2[1]]
+class Vector2:
+ def __init__(self, x,y):
+   self.x = x
+   self.y = y
+ def __add__(self, other):
+  return Vector2(self.x + other.x, self.y + other.y)
+ def __sub__(self, other):
+  return Vector2(self.x - other.x, self.y - other.y)
+ def __mul__(self, other):
+  if isinstance(other, (Vector2)):
+   return Vector2(self.x * other.x, self.y * other.y)
+  else:
+   return Vector2(self.x * other, self.y * other)
+ def __rmul__(self, scaler):
+  return Vector2(self.x * scaler, self.y * scaler)
+ def __truediv__(self, scaler):
+  return Vector2(self.x / scaler, self.y / scaler)
+ def __floordiv__(self, scaler):
+  return Vector2(self.x // scaler, self.y // scaler)
+ def __iadd__(self, other):
+  self.x += other.x
+  self.y += other.y
+  return self
+ def __isub__(self, other):
+  self.x -= other.x
+  self.y -= other.y
+  return self
+ def __eq__(self,other):
+  if self.x == other.x and self.y == other.y:
+   return True
+ def __ne__(self, other):
+  if self.x == other.x and self.y == other.y:
+   return True
+  else:
+   return False
+ def __lt__(self, other):
+  if isinstance(other, Vector2):
+   if self.x < other.x and self.y < other.y:
+    return True
+  else:
+   if self.x < other and self.y < other:
+    return True
+  return False
+ def __gt__(self, other):
+  if isinstance(other, Vector2):
+   if self.x > other.x and self.y > other.y:
+    return True
+  else:
+   if self.x > other and self.y > other:
+    return True
+  return False
+
+ def __repr__(self):
+  return f"Vector2(x: {self.x},y: {self.y})"
+ def dupl(self):
+  return Vector2(self.x, self.y)
+ def __abs__(self):
+  return Vector2(abs(self.x), abs(self.y))
+ def __hash__(self):
+  return hash((self.x, self.y))
+
+
+
+
+# ===== src/code.py =====
+# title:   gameofnote
+# author:  game developers, email, etc.
+# desc:    short description
+# site:    website link
+# license: MIT License (change this to your license of choice)
+# version: 0.1
+# script:  python
+# this is a test
+import random
+import math
+import time
+
+def reverse(dictionary):
+    return {value: key for key, value in dictionary.items()}
+
+
+
+
+ATTACKING_SPEED = 10
+attacking_timer = ATTACKING_SPEED
+
+generate_world(random.randint(0,1000))
+test = Mob(Vector2(0,0), 100, 0.5, 0.5, True, 277, 2, 100, True, 10)
+mobs = []
+
+def DeathScreen():
+ cls(0)
+ print(str("You are dead"), x=int(SCREEN_SIZE[0]/2), y=int(SCREEN_SIZE[1]/2), color=15, fixed=False, scale=3)
+ print(str("Yes you read that correctly"), x=int(SCREEN_SIZE[0]/2), y=int(SCREEN_SIZE[1]/2)+20, color=15, fixed=False, scale=1)
+ time.sleep(10)
+ exit()
+
+
 state = State_Machine()
 state.set("start")
+
+shader_object = Shader(4)
 def TIC():
  global t
  global pos
@@ -644,6 +723,8 @@ def TIC():
  global buttonDown, buttonUp, buttonRight, buttonLeft
  global mobs
  global state
+ global shader_object
+ shader_object.calculate(pos)
  if len(mobs) < 10:
   mobs.append(Mob(Vector2(random.randint(0,SCREEN_SIZE[0]*8),random.randint(0, SCREEN_SIZE[1]*8)), 100, 0.5, 0.5, True, 277, 2, 100, True, 10))
  if playerCurrentHealth <= 0:
@@ -696,7 +777,7 @@ def TIC():
   if cam.y > max_cam.y:
    cam.y = max_cam.y
 
-  map(int((cam.x/speed)/8), int((cam.y/speed)/8), sx=-(cam.x%8), sy=-(cam.y%8), remap=shader)
+  map(int((cam.x/speed)/8), int((cam.y/speed)/8), sx=-(cam.x%8), sy=-(cam.y%8), remap=shader_object.shader)
   for mob in mobs:
    mob.loop(pos, cam)
   display_lives()
@@ -712,3 +793,4 @@ def TIC():
   t += 1
   if btn(5):
    state.set("inventory")
+
