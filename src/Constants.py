@@ -18,14 +18,16 @@ inventoryLayout = [["grass", "planks", "stone","leaves","logs",""],
 
 
 
-sprites = {"grass":2, "planks":101, "":150, "stone":3, "leaves": 4, "logs": 5, "chest": 18, "dark stone":20,
+sprites = {"grass":2, "planks":101, "":0, "stone":3, "leaves": 4, "logs": 5, "chest": 18, "dark stone":20,
            "stone pickaxe":320, "iron pickaxe": 321, "gold pickaxe": 322, "diamond pickaxe": 323,
            "stone sword": 336, "iron sword": 336, "gold sword": 337, "diamond sword": 338,
            "stone spear": 352, "iron spear": 337, "gold spear": 338, "diamond spear": 339,
            "stone axe": 368, "iron axe":369, "gold axe":370, "diamond axe": 371,
            # ores
            "iron ore": 22, "gold ore": 23, "diamond ore": 24,
-           "iron ingot": 38, "gold ingot": 39, "diamond peice": 40}
+           "iron ingot": 38, "gold ingot": 39, "diamond peice": 40,
+            # water
+            "water":15}
 
 UNDERGROUND = ["stone", "darkstone", "gold ore", "iron ore", "diamond ore"]
 
@@ -53,9 +55,9 @@ nonPlacables = ["stone pickaxe", "stone sword", "stone axe", "stone spear",
 
 breaking_tools = {"stone pickaxe":1, "iron pickaxe": 2, "gold pickaxe": 4, "diamond pickaxe": 5}
 
-placeSprites = {"grass":2, "planks":1, "stone":3, "": 0, "leaves": 4, "logs": 5, "chest": 18, "dark stone":20}
+placeSprites = {"grass":2, "planks":1, "stone":3, "": 0, "leaves": 4, "logs": 5, "chest": 18, "dark stone":20, "water":15}
 
-bottomBlocks = ["dark stone", "grass"]
+bottomBlocks = ["dark stone", "grass", "water"]
 
 inventorySellection = [0,0]
 
@@ -64,8 +66,9 @@ cBlock = ""
 counter = Vector2(0,0)
 
 speed = 1
+WATER_SPEED = 5
 
-walkable_blocks = ["grass", "leaves", "dark stone"]
+walkable_blocks = ["grass", "leaves", "dark stone","water"]
 
 walkable_blocks = [placeSprites[block] for block in walkable_blocks]
 
@@ -81,4 +84,3 @@ stone_map = [
     [False for x in range(SCREEN_SIZE[0])]
     for y in range(SCREEN_SIZE[1])
 ]
-
