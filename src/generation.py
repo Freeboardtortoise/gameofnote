@@ -84,9 +84,7 @@ def generate_world(seed):
    if total_wave > 0.2:
     mset(x, y, placeSprites["stone"])
     stone_map[y][x] = True
-   elif total_wave < 0.7:
-    mset(x,y, sprites["water"])
-    
+   else:
     if total_forrestWave > 0.2:
      if x * random.randint(1, treeRandomise) % 4 == 0 and y * random.randint(1, treeRandomise) % 4 == 0:
       generate_tree(Vector2(x,y))
