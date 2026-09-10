@@ -3,7 +3,7 @@ def inventory_main():
  global invent, inventmen, cBlock, walkable_blocks
  global state
  cls(15)
- map(int((pos.x/speed)/8), int((pos.y/speed)/8))
+ map(int((pos.x/speed)/8), int((pos.y/speed)/8), remap=shader_object.shader)
 
  inventWidth = 15
  inventHeight = 17
