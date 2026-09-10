@@ -55,7 +55,6 @@ def generate_world(seed):
  forrestoffset_1 = Vector2(random.random() * 100.0, random.random() * 100.0)
  forrestoffset_2 = Vector2(random.random() * 100.0, random.random() * 100.0)
 
-
  frequency = 0.04
  treeRandomise = 2
 
@@ -85,7 +84,8 @@ def generate_world(seed):
    if total_wave > 0.2:
     mset(x, y, placeSprites["stone"])
     stone_map[y][x] = True
-   else:
+   elif total_wave < 0.7:
+    mset(x,y, sprites["water"])
     
     if total_forrestWave > 0.2:
      if x * random.randint(1, treeRandomise) % 4 == 0 and y * random.randint(1, treeRandomise) % 4 == 0:
