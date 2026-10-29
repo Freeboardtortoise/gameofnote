@@ -35,7 +35,7 @@ jobs:
             libglx-mesa0 \
             libgl1-mesa-dri \
             xvfb \
-            curl
+            curl python3
 
       - name: Download and Install TIC-80
         run: |
@@ -45,6 +45,7 @@ jobs:
 
       - name: Compile Game Builds
         run: |
+          python3 build.py
           mkdir -p dist/downloads
           
           # 1. Export Web/HTML version
