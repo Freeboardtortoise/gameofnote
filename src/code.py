@@ -6,9 +6,6 @@
 # version: 0.1
 # script:  python
 # this is a test
-import random
-import math
-import time
 
 def reverse(dictionary):
     return {value: key for key, value in dictionary.items()}
