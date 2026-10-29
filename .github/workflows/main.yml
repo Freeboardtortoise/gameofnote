@@ -50,7 +50,17 @@ jobs:
           
           # 1. Export Web/HTML version
           SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export html standalone=1 & exit" < /dev/null
-          unzip standalone.zip -d dist
+          unzip -o standalone.zip -d dist
+
+          # Make website directories accessible and files readable
+          find dist -type d -exec chmod 755 {} +
+          find dist -type f -exec chmod 644 {} +
+          
+          # Verify the required web files exist
+          test -s dist/index.html
+          test -s dist/cart.tic
+          test -s dist/tic80.js
+          test -s dist/tic80.wasm
 
           # 2. Export Native builds separately (TIC-80's CLI parser expects individual export commands)
           SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export win game.exe & exit" < /dev/null
