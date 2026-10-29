@@ -24,5 +24,5 @@ output = "\n\n".join(
     for filename in files
 )
 
-Path("game.py").write_text(output, encoding="utf-8")
+Path("code.py").write_text(output, encoding="utf-8")
 
