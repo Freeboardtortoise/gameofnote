@@ -3,11 +3,9 @@ A retro sandbox survival game where your both inventory and chests are physical 
 
 ##  About
 ### what is the game
-Pack of worlds is a sanbox survival game where you explore a proceduraly generated world with your backpack as a physical space that you can enter and exit at your will (that part is not yet added to the game but will be soon).
+Pack of worlds is a sanbox survival game where you explore a proceduraly generated world.
 ### The gameplay loop
-Wonder around and collect recources, mine, get jump scared by a mob, kill it, and then enter your backpack to place the things you got into your inventroy one by one and orgonise it.
-### What makes it intresting?
-you can enter your backpack and chests as physical tangable spaces.
+Wonder around and collect recources, mine, get jump scared by a mob, kill it. build a bass and hide from the rest of the mobs.
 
 ## Features
 
@@ -21,7 +19,7 @@ you can enter your backpack and chests as physical tangable spaces.
 ### Requirements
 
 - tic80
-- tic80
+- python3
 - None
 
 ### Installation
