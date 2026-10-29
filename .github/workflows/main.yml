@@ -56,7 +56,7 @@ jobs:
           SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export win game.exe & exit" < /dev/null
           zip dist/downloads/game-windows.zip game.exe
 
-          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.py & import code code.py & export linux game-linux & exit" < /dev/null || \
+          SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export linux game-linux & exit" < /dev/null || \
           SDL_AUDIODRIVER=dummy xvfb-run --auto-servernum tic80 --cli --soft --fs=. --cmd "load sandbox_game.tic & import code code.py & export linux game-linux & exit" < /dev/null
           zip dist/downloads/game-linux.zip game-linux
 
