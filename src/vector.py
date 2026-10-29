@@ -1,3 +1,6 @@
+import random
+import math
+import time
 # Vector2(0,0)
 # [0,0]
 # Vector2 + Vector2
