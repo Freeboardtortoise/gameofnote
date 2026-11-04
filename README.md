@@ -1,6 +1,12 @@
 # Pack of Worlds
 A retro sandbox survival game where your both inventory and chests are physical spaces you can enter... All built in tic80 fantasy console
 
+## A quick note on controls
+** by default the controls are rather strange: arrow keys, ';' -> a, 'x' -> b **
+to change the controls please press the escape key and navigate : options -> setup gamepad, change the keymap as desired and save.
+
+To acces the inventory, press what you have remapped B to.
+
 ##  About
 ### what is the game
 Pack of worlds is a sanbox survival game where you explore a proceduraly generated world.
