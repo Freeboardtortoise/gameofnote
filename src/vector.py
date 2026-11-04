@@ -5,6 +5,10 @@ import time
 # [0,0]
 # Vector2 + Vector2
 # [v1[0] + v2[0], v1[1] + v2[1]]
+
+def BOOT():
+  menu()
+
 class Vector2:
  def __init__(self, x,y):
    self.x = x
